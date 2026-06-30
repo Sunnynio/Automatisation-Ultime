@@ -1,354 +1,271 @@
-# Récupération des Tâches depuis Notion
+#!/usr/bin/env python3
+"""
+fetch_tasks.py — Récupère les tâches du Master Board Notion et génère un prompt IA.
 
-> **Fichier** : `scripts/notion_api/fetch_tasks.py`  
-> **Rôle** : Récupérer des tâches depuis une base Notion avec des filtres et un tri personnalisés.  
-> **Dépendances** : `notion-client`, `utils.config`, `utils.helpers`, `utils.logger`
+Usage:
+  python fetch_tasks.py                               # liste toutes les tâches actives
+  python fetch_tasks.py --done                        # tâches terminées (daily digest)
+  python fetch_tasks.py --zombie                      # tâches bloquées > 21 jours
+  python fetch_tasks.py --support Téléphone           # filtre par support
+  python fetch_tasks.py --duree "30 min" "10 min"    # filtre par durée(s)
+  python fetch_tasks.py --pays France                 # filtre par pays/lieu
+  python fetch_tasks.py --context "j'ai 2h sur PC"   # contexte libre pour l'IA
+  python fetch_tasks.py --support Téléphone --duree "30 min" --pays Thaïlande
 
----
+Prérequis :
+  pip install notion-client python-dotenv
+  Fichier .env avec NOTION_TOKEN et NOTION_DATABASE_ID
+"""
 
-## 📌 **Fonctionnalités**
-- Récupération de **toutes les tâches** d’une base Notion.
-- **Filtrage** par contexte (pays, support, durée, priorité, statut, etc.).
-- **Tri** par priorité et durée (ou autre critère).
-- **Pagination** pour gérer les grandes bases.
-- **Journalisation** des actions pour le débogage.
+import argparse
+import os
+import sys
+from datetime import datetime, timedelta, timezone
 
----
-
-## 🔧 **Code**
-
-```python
-from typing import List, Dict, Any, Optional
+from dotenv import load_dotenv
 from notion_client import Client
-from utils.config import get_notion_client, NOTION_DATABASE_ID
-from utils.helpers import filter_tasks_by_context, sort_tasks_by_priority_and_duration
-from utils.logger import logger, log_exception
 
+load_dotenv()
 
-def fetch_all_tasks(
-    database_id: Optional[str] = None,
-    filters: Optional[Dict[str, Any]] = None,
-    sort: bool = True,
-    page_size: int = 100
-) -> List[Dict[str, Any]]:
-    """
-    Récupère toutes les tâches d'une base Notion, avec pagination.
-    
-    Args:
-        database_id: ID de la base Notion (par défaut : NOTION_DATABASE_ID depuis .env).
-        filters: Dictionnaire de filtres (ex: {"pays": "Thaïlande", "supports": ["Téléphone"]}).
-        sort: Si True, trie les tâches par priorité et durée.
-        page_size: Nombre de tâches par page (max 100 pour Notion API).
-    
-    Returns:
-        List[Dict[str, Any]]: Liste de toutes les tâches (format Notion API).
-    
-    Raises:
-        ValueError: Si database_id n'est pas fourni et que NOTION_DATABASE_ID n'est pas défini.
-    """
-    if not database_id and not NOTION_DATABASE_ID:
-        raise ValueError(
-            "Aucun ID de base Notion fourni et NOTION_DATABASE_ID non défini dans .env. "
-            "Veuillez fournir un database_id ou configurer NOTION_DATABASE_ID."
-        )
-    
-    database_id = database_id or NOTION_DATABASE_ID
-    notion = get_notion_client()
-    
-    all_tasks = []
-    start_cursor = None
-    
-    logger.info(f"Récupération des tâches depuis la base Notion {database_id}")
-    
-    while True:
-        try:
-            response = notion.databases.query(
-                database_id=database_id,
-                start_cursor=start_cursor,
-                page_size=page_size
-            )
-            all_tasks.extend(response["results"])
-            start_cursor = response.get("next_cursor")
-            
-            if not start_cursor:
-                break
-            
-            logger.debug(f"Récupéré {len(response['results'])} tâches (cursor: {start_cursor})")
-        
-        except Exception as e:
-            log_exception(e, f"Erreur lors de la récupération des tâches (cursor: {start_cursor})")
-            raise
-    
-    logger.info(f"Total tâches récupérées: {len(all_tasks)}")
-    
-    # Appliquer les filtres si fournis
-    if filters:
-        all_tasks = filter_tasks_by_context(all_tasks, filters)
-        logger.info(f"Tâches après filtrage: {len(all_tasks)}")
-    
-    # Trier les tâches si demandé
-    if sort:
-        all_tasks = sort_tasks_by_priority_and_duration(all_tasks)
-    
-    return all_tasks
+NOTION_TOKEN = os.getenv("NOTION_TOKEN")
+NOTION_DATABASE_ID = os.getenv("NOTION_DATABASE_ID")
 
-
-def fetch_tasks_by_context(
-    context: Dict[str, Any],
-    database_id: Optional[str] = None,
-    sort: bool = True
-) -> List[Dict[str, Any]]:
-    """
-    Récupère des tâches filtrées par contexte.
-    
-    Args:
-        context: Dictionnaire de contexte pour le filtrage (ex: {"pays": "Thaïlande", "supports": ["Téléphone"]}).
-        database_id: ID de la base Notion (par défaut : NOTION_DATABASE_ID).
-        sort: Si True, trie les tâches par priorité et durée.
-    
-    Returns:
-        List[Dict[str, Any]]: Liste de tâches filtrées et triées.
-    
-    Exemple:
-        >>> context = {
-        ...     "pays": "Thaïlande",
-        ...     "supports": ["Téléphone"],
-        ...     "max_duration": "30 min",
-        ...     "status": "Terminé"
-        ... }
-        >>> tasks = fetch_tasks_by_context(context)
-    """
-    tasks = fetch_all_tasks(database_id=database_id, filters=context, sort=sort)
-    return tasks
-
-
-def fetch_tasks_by_status(
-    status: str,
-    database_id: Optional[str] = None
-) -> List[Dict[str, Any]]:
-    """
-    Récupère des tâches par statut.
-    
-    Args:
-        status: Statut des tâches à récupérer (ex: "À déléguer à l’IA", "Terminé").
-        database_id: ID de la base Notion.
-    
-    Returns:
-        List[Dict[str, Any]]: Liste de tâches avec le statut spécifié.
-    """
-    context = {"status": status}
-    return fetch_tasks_by_context(context, database_id)
-
-
-def fetch_tasks_by_priority(
-    priority: str,
-    database_id: Optional[str] = None
-) -> List[Dict[str, Any]]:
-    """
-    Récupère des tâches par priorité.
-    
-    Args:
-        priority: Priorité des tâches (ex: "Urgent", "Important").
-        database_id: ID de la base Notion.
-    
-    Returns:
-        List[Dict[str, Any]]: Liste de tâches avec la priorité spécifiée.
-    """
-    context = {"min_priority": priority}
-    return fetch_tasks_by_context(context, database_id)
-
-
-def fetch_tasks_by_country(
-    country: str,
-    database_id: Optional[str] = None
-) -> List[Dict[str, Any]]:
-    """
-    Récupère des tâches par pays/lieu.
-    
-    Args:
-        country: Pays ou lieu des tâches (ex: "Thaïlande", "France").
-        database_id: ID de la base Notion.
-    
-    Returns:
-        List[Dict[str, Any]]: Liste de tâches pour le pays spécifié.
-    """
-    context = {"pays": country}
-    return fetch_tasks_by_context(context, database_id)
-
-
-def fetch_tasks_by_support(
-    supports: List[str],
-    database_id: Optional[str] = None
-) -> List[Dict[str, Any]]:
-    """
-    Récupère des tâches par support.
-    
-    Args:
-        supports: Liste des supports (ex: ["Téléphone", "PC Portable"]).
-        database_id: ID de la base Notion.
-    
-    Returns:
-        List[Dict[str, Any]]: Liste de tâches pour les supports spécifiés.
-    """
-    context = {"supports": supports}
-    return fetch_tasks_by_context(context, database_id)
-
-
-def fetch_tasks_by_duration(
-    max_duration: str,
-    database_id: Optional[str] = None
-) -> List[Dict[str, Any]]:
-    """
-    Récupère des tâches par durée maximale.
-    
-    Args:
-        max_duration: Durée maximale (ex: "30 min", "1h").
-        database_id: ID de la base Notion.
-    
-    Returns:
-        List[Dict[str, Any]]: Liste de tâches avec une durée ≤ max_duration.
-    """
-    context = {"max_duration": max_duration}
-    return fetch_tasks_by_context(context, database_id)
-
-
-# ======================
-# Exemples d'Utilisation
-# ======================
-
-if __name__ == "__main__":
-    # Exemple 1: Récupérer toutes les tâches
-    print("📌 Récupération de toutes les tâches...")
-    all_tasks = fetch_all_tasks()
-    print(f"Total: {len(all_tasks)} tâches\n")
-    
-    # Exemple 2: Filtrer par contexte (Thaïlande, Téléphone, 30 min max)
-    print("📌 Tâches en Thaïlande sur téléphone (≤ 30 min):")
-    context = {
-        "pays": "Thaïlande",
-        "supports": ["Téléphone"],
-        "max_duration": "30 min",
-        "status": "Terminé"
-    }
-    filtered_tasks = fetch_tasks_by_context(context)
-    for task in filtered_tasks[:3]:  # Afficher les 3 premières
-        props = task["properties"]
-        print(f"- {props['Nom']['title'][0]['plain_text']} ({props['⏱️ Durée']['select']['name']})")
-    print()
-    
-    # Exemple 3: Récupérer les tâches "À déléguer à l’IA"
-    print("📌 Tâches à déléguer à l’IA:")
-    delegable_tasks = fetch_tasks_by_status("À déléguer à l’IA")
-    for task in delegable_tasks:
-        print(f"- {task['properties']['Nom']['title'][0]['plain_text']}")
-    print()
-    
-    # Exemple 4: Récupérer les tâches urgentes
-    print("📌 Tâches urgentes:")
-    urgent_tasks = fetch_tasks_by_priority("Urgent")
-    for task in urgent_tasks:
-        print(f"- {task['properties']['Nom']['title'][0]['plain_text']}")
-    print()
-    
-    # Exemple 5: Récupérer les tâches pour la France
-    print("📌 Tâches pour la France:")
-    france_tasks = fetch_tasks_by_country("France")
-    for task in france_tasks:
-        print(f"- {task['properties']['Nom']['title'][0]['plain_text']}")
-```
-
----
-
-## 📝 **Explications**
-
-### **1. `fetch_all_tasks()`**
-- **Fonction principale** pour récupérer toutes les tâches d’une base Notion.
-- **Gère la pagination** automatiquement (Notion limite à 100 tâches par requête).
-- **Applique les filtres** si fournis (via `filter_tasks_by_context`).
-- **Trie les tâches** par priorité et durée si `sort=True`.
-
----
-
-### **2. `fetch_tasks_by_context()`**
-- **Fonction de haut niveau** pour récupérer des tâches filtrées par contexte.
-- **Utilise `filter_tasks_by_context`** pour appliquer les filtres.
-- **Retourne les tâches triées** si `sort=True`.
-
----
-
-### **3. Fonctions Spécialisées**
-- **`fetch_tasks_by_status()`** : Filtre par statut (ex: "À déléguer à l’IA").
-- **`fetch_tasks_by_priority()`** : Filtre par priorité (ex: "Urgent").
-- **`fetch_tasks_by_country()`** : Filtre par pays/lieu (ex: "Thaïlande").
-- **`fetch_tasks_by_support()`** : Filtre par support (ex: ["Téléphone"]).
-- **`fetch_tasks_by_duration()`** : Filtre par durée maximale (ex: "30 min").
-
----
-
-## 🚀 **Utilisation**
-
-### **1. Récupérer Toutes les Tâches**
-```python
-from notion_api.fetch_tasks import fetch_all_tasks
-
-# Récupérer toutes les tâches de la base par défaut
-all_tasks = fetch_all_tasks()
-
-# Récupérer toutes les tâches d'une base spécifique
-all_tasks = fetch_all_tasks(database_id="ID_DE_LA_BASE")
-```
-
----
-
-### **2. Filtrer par Contexte**
-```python
-from notion_api.fetch_tasks import fetch_tasks_by_context
-
-# Définir le contexte
-context = {
-    "pays": "Thaïlande",
-    "supports": ["Téléphone", "PC Portable"],
-    "max_duration": "1h",
-    "min_priority": "Important",
-    "status": "Terminé"
+PRIORITY_ORDER = {
+    "🔴 Urgent": 0,
+    "🟠 Important": 1,
+    "🟡 Secondaire": 2,
+    "⚪ Optionnel": 3,
 }
 
-# Récupérer les tâches filtrées
-tasks = fetch_tasks_by_context(context)
-```
+DURATION_MINUTES = {
+    "10 min": 10,
+    "30 min": 30,
+    "1h": 60,
+    "1h30": 90,
+    "2h": 120,
+    "Demi-journée": 240,
+    "1 jour+": 480,
+}
 
----
 
-### **3. Utiliser les Fonctions Spécialisées**
-```python
-from notion_api.fetch_tasks import (
-    fetch_tasks_by_status,
-    fetch_tasks_by_priority,
-    fetch_tasks_by_country
-)
+# ---------------------------------------------------------------------------
+# Connexion
+# ---------------------------------------------------------------------------
 
-# Tâches à déléguer à l'IA
-delegable_tasks = fetch_tasks_by_status("À déléguer à l’IA")
+def get_client():
+    if not NOTION_TOKEN:
+        print("ERREUR : NOTION_TOKEN manquant. Ajoutez-le dans .env", file=sys.stderr)
+        sys.exit(1)
+    return Client(auth=NOTION_TOKEN)
 
-# Tâches urgentes
-urgent_tasks = fetch_tasks_by_priority("Urgent")
 
-# Tâches pour la Thaïlande
-thailand_tasks = fetch_tasks_by_country("Thaïlande")
-```
+def get_db_id(override=None):
+    db_id = override or NOTION_DATABASE_ID
+    if not db_id:
+        print(
+            "ERREUR : NOTION_DATABASE_ID manquant. Ajoutez-le dans .env ou utilisez --db",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    return db_id
 
----
 
-## ✅ **Bonnes Pratiques**
+# ---------------------------------------------------------------------------
+# Extraction des propriétés Notion
+# ---------------------------------------------------------------------------
 
-1. **Toujours gérer les erreurs** : Utilisez `try/except` pour capturer les erreurs API.
-2. **Limiter les requêtes** : Notion limite à **3 requêtes/seconde**. Ajoutez un délai si nécessaire.
-3. **Cachez les résultats** : Pour les requêtes fréquentes, utilisez un cache (ex: `@lru_cache`).
-4. **Journalisez les actions** : Utilisez `logger.info()` pour suivre l’exécution.
+def prop(task, name, kind):
+    p = task.get("properties", {}).get(name, {})
+    if kind == "title":
+        items = p.get("title", [])
+        return items[0]["plain_text"] if items else ""
+    if kind == "select":
+        s = p.get("select")
+        return s["name"] if s else None
+    if kind == "multi_select":
+        return [s["name"] for s in p.get("multi_select", [])]
+    if kind == "status":
+        s = p.get("status")
+        return s["name"] if s else None
+    if kind == "rich_text":
+        items = p.get("rich_text", [])
+        return items[0]["plain_text"] if items else ""
+    if kind == "date":
+        d = p.get("date")
+        return d["start"] if d else None
+    return None
 
----
 
-## 📚 **Ressources**
-- [Notion API Documentation](https://developers.notion.com/docs/working-with-databases)
-- [Notion API Pagination](https://developers.notion.com/docs/pagination)
-- [Python `notion-client` Library](https://github.com/ramnes/notion-sdk-py)
+# ---------------------------------------------------------------------------
+# Récupération paginée
+# ---------------------------------------------------------------------------
+
+def fetch_all(notion, db_id):
+    results, cursor = [], None
+    while True:
+        params = {"database_id": db_id, "page_size": 100}
+        if cursor:
+            params["start_cursor"] = cursor
+        resp = notion.databases.query(**params)
+        results.extend(resp["results"])
+        cursor = resp.get("next_cursor")
+        if not cursor:
+            break
+    return results
+
+
+# ---------------------------------------------------------------------------
+# Filtres
+# ---------------------------------------------------------------------------
+
+def filter_active(tasks):
+    return [t for t in tasks if prop(t, "Statut", "status") != "Terminé"]
+
+
+def filter_done(tasks):
+    return [t for t in tasks if prop(t, "Statut", "status") == "Terminé"]
+
+
+def filter_zombie(tasks, days=21):
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    return [
+        t for t in tasks
+        if prop(t, "Statut", "status") == "Pas commencé"
+        and datetime.fromisoformat(t["created_time"]) < cutoff
+    ]
+
+
+def filter_session(tasks, supports=None, durees=None, pays=None):
+    result = filter_active(tasks)
+
+    if pays and pays != "Global":
+        result = [
+            t for t in result
+            if prop(t, "Pays / Lieu", "select") in (pays, "Global", None)
+        ]
+
+    if supports:
+        def ok_support(t):
+            s = prop(t, "Support", "multi_select") or []
+            return "Global" in s or any(x in s for x in supports)
+        result = [t for t in result if ok_support(t)]
+
+    if durees:
+        result = [t for t in result if prop(t, "Durée", "select") in durees]
+
+    def sort_key(t):
+        p = PRIORITY_ORDER.get(prop(t, "Priorité", "select"), 99)
+        d = DURATION_MINUTES.get(prop(t, "Durée", "select"), 9999)
+        e = prop(t, "Échéance", "date") or "9999-12-31"
+        return (p, d, e)
+
+    result.sort(key=sort_key)
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Formatage
+# ---------------------------------------------------------------------------
+
+def task_line(t, i=None):
+    nom = prop(t, "Nom de la tâche", "title") or "(sans titre)"
+    statut = prop(t, "Statut", "status") or ""
+    prio = prop(t, "Priorité", "select") or ""
+    dur = prop(t, "Durée", "select") or ""
+    sup = ", ".join(prop(t, "Support", "multi_select") or [])
+    pays = prop(t, "Pays / Lieu", "select") or ""
+    ech = prop(t, "Échéance", "date") or ""
+    prefix = f"{i}. " if i is not None else "- "
+    details = " | ".join(x for x in [dur, prio, sup, pays, ech] if x)
+    return f"{prefix}{nom}  [{details}]  ({statut})"
+
+
+def print_prompt(tasks, mode, context=None):
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+    if mode == "digest":
+        print(f"=== DAILY DIGEST — {now} ===")
+        print(f"Tâches terminées : {len(tasks)}\n")
+        for i, t in enumerate(tasks, 1):
+            print(task_line(t, i))
+        print()
+        print(
+            ">>> Génère un résumé de la journée en 5 lignes max : ce qui a été accompli, "
+            "patterns observés, ce qui reste en suspens. Sois direct et concis."
+        )
+
+    elif mode == "zombie":
+        print(f"=== NETTOYAGE ZOMBIE — {now} ===")
+        print(f"Tâches bloquées depuis > 21 jours : {len(tasks)}\n")
+        for i, t in enumerate(tasks, 1):
+            created = t.get("created_time", "")[:10]
+            nom = prop(t, "Nom de la tâche", "title") or "(sans titre)"
+            print(f"{i}. {nom}  [créée le {created}]")
+        print()
+        print(">>> Pour chaque tâche : indique GARDER / ARCHIVER / DÉCOMPOSER et pourquoi en une ligne.")
+
+    elif mode == "session":
+        print(f"=== SESSION PLANNING — {now} ===")
+        if context:
+            print(f"Contexte : {context}")
+        print(f"Tâches disponibles ({len(tasks)}) :\n")
+        for i, t in enumerate(tasks, 1):
+            print(task_line(t, i))
+        print()
+        print(
+            ">>> Construis un mini-agenda pour cette session. "
+            "Regroupe les tâches dans le temps disponible. Ajoute des pauses si > 1h30. "
+            "Priorise selon : Priorité > Durée courte > Échéance."
+        )
+
+    else:
+        print(f"=== TÂCHES ACTIVES — {now} ({len(tasks)}) ===\n")
+        for i, t in enumerate(tasks, 1):
+            print(task_line(t, i))
+
+
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Récupère les tâches Notion et génère un prompt pour n'importe quelle IA",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=__doc__,
+    )
+    parser.add_argument("--done", action="store_true", help="Tâches terminées (daily digest)")
+    parser.add_argument("--zombie", action="store_true", help="Tâches bloquées > 21 jours")
+    parser.add_argument("--support", nargs="+", metavar="S", help="Ex: Téléphone 'PC Portable'")
+    parser.add_argument("--duree", nargs="+", metavar="D", help="Ex: '30 min' '10 min' 1h")
+    parser.add_argument("--pays", metavar="P", help="Ex: France Thaïlande Global")
+    parser.add_argument("--context", metavar="TEXTE", help="Contexte libre pour l'IA")
+    parser.add_argument("--db", metavar="ID", help="Remplace NOTION_DATABASE_ID du .env")
+    args = parser.parse_args()
+
+    db_id = get_db_id(args.db)
+    notion = get_client()
+
+    print(f"[Notion] Connexion... base: {db_id[:8]}...", file=sys.stderr)
+    all_tasks = fetch_all(notion, db_id)
+    print(f"[Notion] {len(all_tasks)} tâches chargées.", file=sys.stderr)
+
+    if args.done:
+        tasks = filter_done(all_tasks)
+        print_prompt(tasks, "digest")
+    elif args.zombie:
+        tasks = filter_zombie(all_tasks)
+        print_prompt(tasks, "zombie")
+    elif args.support or args.duree or args.pays:
+        tasks = filter_session(all_tasks, args.support, args.duree, args.pays)
+        print_prompt(tasks, "session", args.context)
+    elif args.context:
+        tasks = filter_active(all_tasks)
+        print_prompt(tasks, "session", args.context)
+    else:
+        tasks = filter_active(all_tasks)
+        print_prompt(tasks, "list")
+
+
+if __name__ == "__main__":
+    main()

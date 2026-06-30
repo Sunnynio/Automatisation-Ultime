@@ -13,8 +13,12 @@
   - URL : https://app.notion.com/p/0de619a1e693410d94946c4f5fdaf30a
   - Data Source ID : `collection://afa424a0-5fe7-47c5-8a66-06a6e413cda0`
   - Vue active : Kanban groupé par Statut
-  - Propriétés présentes au 30/06/2026 : Durée, Support, Pays/Lieu, Statut, Catégorie\*, Échéance\*, Notes\*
-  - \* Ajoutées par Claude (claude.ai web) — à valider par Franck
+  - Propriétés présentes au 30/06/2026 : Nom de la tâche, Durée, Support, Pays/Lieu, Statut, Priorité, Catégorie, Échéance, Notes
+  - 12 tâches d'exemple créées le 30/06/2026
+- **Base "Daily Digest"** :
+  - URL : https://app.notion.com/p/30342149a740489f9cb85b99e82e7486
+  - Data Source ID : `collection://83292ab8-5336-4e77-90f4-811ef80a9a7f`
+  - Propriétés : Date (DATE), Résumé (RICH_TEXT), Tâches terminées (NUMBER), Temps total (RICH_TEXT), Observations (RICH_TEXT)
 
 ---
 
@@ -31,14 +35,20 @@
 
 ## Infrastructure scripts
 
-Rien de déployé en production à ce jour. Les scripts présents dans `/scripts/` sont des prototypes non testés avec des tokens réels.
+Scripts Python fonctionnels (code réel, non du markdown). Non testés avec de vrais tokens — nécessite un fichier `.env` configuré.
 
-| Script | État | Testé |
+| Script | Rôle | État |
 |---|---|---|
-| `scripts/notion_api/fetch_tasks.py` | Prototype | Non |
-| `scripts/notion_api/update_task.py` | Prototype | Non |
-| `scripts/automation/context_filter.py` | Prototype | Non |
-| `scripts/utils/` | Utilitaires | Non |
+| `scripts/notion_api/fetch_tasks.py` | CLI principal : liste tâches, digest, zombie, session | Fonctionnel, non testé en prod |
+| `scripts/notion_api/update_task.py` | Mise à jour d'une tâche Notion | Prototype |
+| `scripts/automation/context_filter.py` | Session Planning interactif | Fonctionnel, non testé en prod |
+| `scripts/automation/daily_digest.py` | Daily Digest avec stats | Fonctionnel, non testé en prod |
+| `scripts/automation/zombie_cleanup.py` | Nettoyage tâches > 21 jours | Fonctionnel, non testé en prod |
+| `scripts/utils/config.py` | Chargement .env, client Notion | Fonctionnel |
+| `scripts/utils/helpers.py` | Utilitaires Python (get_prop, filtres, tri) | Fonctionnel |
+| `scripts/utils/logger.py` | Logger minimal | Fonctionnel |
+
+Dépendances Python : `pip install -r requirements.txt` (notion-client, python-dotenv)
 
 ---
 
@@ -50,8 +60,8 @@ Voir `.env.example` à la racine. Aucun token n'est configuré en production (le
 
 ## Ce qui n'existe pas encore
 
-- Synchronisation Calendar↔Notion (aucun scénario Make.com configuré)
-- Script de résumé quotidien
+- Synchronisation Calendar↔Notion — **décision définitive : pas de sync** (voir SESSION_LOG)
 - Déploiement cloud (Google Cloud Functions ou autre)
-- Base Notion "Routines" et "Journal de Bord"
+- Base Notion "Routines"
 - Intégration Gemini API et Mistral API
+- Vues Notion sauvegardées "Session Planning" et "Zombie" (à créer dans l'interface Notion)

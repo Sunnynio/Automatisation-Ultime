@@ -1,530 +1,277 @@
-# Filtre Contextuel pour les Tâches
+#!/usr/bin/env python3
+"""
+context_filter.py — Session Planning interactif depuis le Master Board Notion
 
-> **Fichier** : `scripts/automation/context_filter.py`  
-> **Rôle** : Proposer les meilleures tâches en fonction du contexte de l'utilisateur (temps disponible, support, localisation, etc.).  
-> **Dépendances** : `notion_api.fetch_tasks`, `utils.helpers`, `utils.logger`
+Guide l'utilisateur à construire un agenda de session depuis ses tâches Notion.
+Sans arguments : mode interactif (questions-réponses).
+Avec arguments : mode CLI direct.
 
----
+Usage:
+  python context_filter.py                                        # mode interactif
+  python context_filter.py --temps 3h                            # 3h, tous supports, partout
+  python context_filter.py --temps 45min --support Téléphone     # 45min sur téléphone
+  python context_filter.py --temps 2h --support "PC Portable" --pays France
+  python context_filter.py --temps 1h30 --support Téléphone --pays Thaïlande --context "matinée calme"
 
-## 📌 **Fonctionnalités**
-- **Filtrage intelligent** des tâches Notion selon le contexte.
-- **Priorisation** par priorité, durée, et date limite.
-- **Gestion des chevauchements** avec Google Calendar (optionnel).
-- **Formatage des résultats** (tableau Markdown, liste vocalisée, etc.).
-- **Journalisation** des actions pour le débogage.
+Prérequis :
+  pip install notion-client python-dotenv
+  Fichier .env avec NOTION_TOKEN et NOTION_DATABASE_ID
+"""
 
----
+import argparse
+import os
+import sys
+from datetime import datetime
 
-## 🔧 **Code**
+from dotenv import load_dotenv
+from notion_client import Client
 
-```python
-from typing import List, Dict, Any, Optional
-from notion_api.fetch_tasks import fetch_tasks_by_context
-from utils.helpers import (
-    filter_tasks_by_context,
-    sort_tasks_by_priority_and_duration,
-    format_tasks_as_markdown_table,
-    duration_to_minutes,
-    get_current_time
-)
-from utils.logger import logger, log_exception
+load_dotenv()
+
+NOTION_TOKEN = os.getenv("NOTION_TOKEN")
+NOTION_DATABASE_ID = os.getenv("NOTION_DATABASE_ID")
+
+PRIORITY_ORDER = {
+    "🔴 Urgent": 0,
+    "🟠 Important": 1,
+    "🟡 Secondaire": 2,
+    "⚪ Optionnel": 3,
+}
+
+DURATION_MINUTES = {
+    "10 min": 10,
+    "30 min": 30,
+    "1h": 60,
+    "1h30": 90,
+    "2h": 120,
+    "Demi-journée": 240,
+    "1 jour+": 480,
+}
 
 
-def get_contextual_suggestions(
-    pays: Optional[str] = None,
-    supports: Optional[List[str]] = None,
-    available_time_min: Optional[int] = None,
-    max_suggestions: int = 3,
-    exclude_status: str = "Terminé",
-    min_priority: Optional[str] = None,
-    context_keywords: Optional[List[str]] = None,
-    database_id: Optional[str] = None
-) -> List[Dict[str, Any]]:
-    """
-    Propose les meilleures tâches en fonction du contexte de l'utilisateur.
-    
-    Args:
-        pays: Pays/Lieu actuel (ex: "Thaïlande"). Si None, utilise "Global".
-        supports: Liste des supports disponibles (ex: ["Téléphone", "PC Portable"]).
-        available_time_min: Temps disponible en minutes (ex: 45).
-        max_suggestions: Nombre maximal de suggestions à retourner (par défaut: 3).
-        exclude_status: Statut à exclure (par défaut: "Terminé").
-        min_priority: Priorité minimale (ex: "Important"). Si None, inclut toutes les priorités.
-        context_keywords: Mots-clés de contexte pour filtrer les tâches (ex: ["Admin", "Client X"]).
-        database_id: ID de la base Notion (par défaut: NOTION_DATABASE_ID depuis .env).
-    
-    Returns:
-        List[Dict[str, Any]]: Liste des tâches suggérées (format Notion API), triées par priorité et durée.
-    
-    Exemple:
-        >>> suggestions = get_contextual_suggestions(
-        ...     pays="Thaïlande",
-        ...     supports=["Téléphone"],
-        ...     available_time_min=45
-        ... )
-    """
-    # Construire le contexte de filtrage
-    context = {"status": exclude_status}
-    
-    if pays:
-        context["pays"] = pays
-    
+# ---------------------------------------------------------------------------
+# Connexion Notion
+# ---------------------------------------------------------------------------
+
+def get_notion():
+    if not NOTION_TOKEN:
+        print("ERREUR : NOTION_TOKEN manquant dans .env", file=sys.stderr)
+        sys.exit(1)
+    return Client(auth=NOTION_TOKEN)
+
+
+def fetch_all(notion):
+    db_id = NOTION_DATABASE_ID
+    if not db_id:
+        print("ERREUR : NOTION_DATABASE_ID manquant dans .env", file=sys.stderr)
+        sys.exit(1)
+    results, cursor = [], None
+    while True:
+        params = {"database_id": db_id, "page_size": 100}
+        if cursor:
+            params["start_cursor"] = cursor
+        resp = notion.databases.query(**params)
+        results.extend(resp["results"])
+        cursor = resp.get("next_cursor")
+        if not cursor:
+            break
+    return results
+
+
+def get_prop(task, name, kind):
+    p = task.get("properties", {}).get(name, {})
+    if kind == "title":
+        items = p.get("title", [])
+        return items[0]["plain_text"] if items else ""
+    if kind == "select":
+        s = p.get("select")
+        return s["name"] if s else None
+    if kind == "multi_select":
+        return [s["name"] for s in p.get("multi_select", [])]
+    if kind == "status":
+        s = p.get("status")
+        return s["name"] if s else None
+    if kind == "date":
+        d = p.get("date")
+        return d["start"] if d else None
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Parsing du temps
+# ---------------------------------------------------------------------------
+
+def parse_time(s):
+    """Convertit '3h', '45min', '1h30', '120' en minutes."""
+    s = s.strip().lower().replace(" ", "")
+    if "h" in s and "min" in s:
+        h_part, rest = s.split("h")
+        return int(h_part) * 60 + int(rest.replace("min", ""))
+    if "h" in s:
+        parts = s.split("h")
+        return int(parts[0]) * 60 + (int(parts[1]) if parts[1] else 0)
+    if "min" in s:
+        return int(s.replace("min", ""))
+    try:
+        return int(s)
+    except ValueError:
+        return None
+
+
+def durees_dans_budget(budget_min):
+    return [k for k, v in DURATION_MINUTES.items() if v <= budget_min]
+
+
+# ---------------------------------------------------------------------------
+# Filtrage et tri
+# ---------------------------------------------------------------------------
+
+def filter_and_sort(tasks, supports, durees_ok, pays):
+    result = [t for t in tasks if get_prop(t, "Statut", "status") != "Terminé"]
+
+    if pays and pays != "Global":
+        result = [
+            t for t in result
+            if get_prop(t, "Pays / Lieu", "select") in (pays, "Global", None)
+        ]
+
     if supports:
-        context["supports"] = supports
-    
-    if available_time_min:
-        # Convertir en durée Notion (ex: 45 → "45 min")
-        if available_time_min <= 10:
-            context["max_duration"] = "10 min"
-        elif available_time_min <= 30:
-            context["max_duration"] = "30 min"
-        elif available_time_min <= 60:
-            context["max_duration"] = "1h"
-        elif available_time_min <= 90:
-            context["max_duration"] = "1h30"
-        elif available_time_min <= 120:
-            context["max_duration"] = "2h"
-        else:
-            context["max_duration"] = "Demi-journée"
-    
-    if min_priority:
-        context["min_priority"] = min_priority
-    
-    if context_keywords:
-        context["context_keywords"] = context_keywords
-    
-    # Récupérer et filtrer les tâches
-    tasks = fetch_tasks_by_context(context, database_id=database_id)
-    
-    logger.info(f"Trouvé {len(tasks)} tâches correspondantes au contexte: {context}")
-    
-    # Retourner les meilleures suggestions
-    return tasks[:max_suggestions]
+        def ok(t):
+            s = get_prop(t, "Support", "multi_select") or []
+            return "Global" in s or any(x in s for x in supports)
+        result = [t for t in result if ok(t)]
+
+    if durees_ok:
+        result = [t for t in result if get_prop(t, "Durée", "select") in durees_ok]
+
+    def key(t):
+        p = PRIORITY_ORDER.get(get_prop(t, "Priorité", "select"), 99)
+        d = DURATION_MINUTES.get(get_prop(t, "Durée", "select"), 9999)
+        e = get_prop(t, "Échéance", "date") or "9999-12-31"
+        return (p, d, e)
+
+    result.sort(key=key)
+    return result
 
 
-def format_suggestions(
-    tasks: List[Dict[str, Any]],
-    output_format: str = "markdown",
-    include_details: bool = True
-) -> str:
-    """
-    Formate les suggestions selon le format souhaité.
-    
-    Args:
-        tasks: Liste de tâches suggérées.
-        output_format: Format de sortie ("markdown", "text", "vocal").
-        include_details: Si True, inclut les détails (durée, priorité, contexte).
-    
-    Returns:
-        str: Suggestions formatées.
-    """
+# ---------------------------------------------------------------------------
+# Mode interactif
+# ---------------------------------------------------------------------------
+
+def prompt_interactif():
+    print("=" * 55)
+    print("     SESSION PLANNING — Automatisation-Ultime")
+    print("=" * 55)
+    print()
+
+    temps_str = input("Combien de temps as-tu ? (ex: 3h, 45min, 1h30) : ").strip()
+    budget = parse_time(temps_str)
+    if not budget:
+        print(f"Durée non reconnue : '{temps_str}'. Exemples valides : 3h, 45min, 1h30, 120")
+        sys.exit(1)
+
+    print()
+    print("Supports disponibles : Téléphone / PC Portable / PC Fixe")
+    support_str = input("Sur quel(s) support(s) ? (Entrée = tous) : ").strip()
+    supports = [s.strip() for s in support_str.split(",")] if support_str else None
+
+    print()
+    print("Lieux : Global / Thaïlande / France / Saudi Arabia / Avion / Hôtel")
+    pays_str = input("Pays/Lieu actuel ? (Entrée = tous) : ").strip()
+    pays = pays_str if pays_str else None
+
+    print()
+    contexte = input("Contexte additionnel ? (ex: matinée calme, avion, en déplacement — Entrée pour ignorer) : ").strip()
+
+    return budget, supports, pays, contexte
+
+
+# ---------------------------------------------------------------------------
+# Génération du prompt
+# ---------------------------------------------------------------------------
+
+def build_prompt(tasks, budget, supports, pays, contexte):
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+    h, m = divmod(budget, 60)
+    budget_str = f"{h}h{m:02d}" if h else f"{m}min"
+
+    ctx_parts = [f"Temps disponible : {budget_str}"]
+    if supports:
+        ctx_parts.append(f"Support : {', '.join(supports)}")
+    if pays:
+        ctx_parts.append(f"Lieu : {pays}")
+    if contexte:
+        ctx_parts.append(contexte)
+
+    print()
+    print(f"=== SESSION PLANNING — {now} ===")
+    print(" | ".join(ctx_parts))
+    print(f"Tâches éligibles ({len(tasks)}) :")
+    print()
+
     if not tasks:
-        if output_format == "vocal":
-            return "Aucune tâche ne correspond à votre contexte. Profitez de ce temps pour vous reposer !"
-        else:
-            return "Aucune tâche ne correspond à votre contexte."
-    
-    if output_format == "markdown":
-        return format_tasks_as_markdown_table(tasks)
-    
-    elif output_format == "text":
-        lines = []
-        for i, task in enumerate(tasks, 1):
-            props = task["properties"]
-            name = props["Nom"]["title"][0]["plain_text"]
-            if include_details:
-                duration = props["⏱️ Durée"]["select"]["name"]
-                priority = props["🎯 Priorité"]["select"]["name"]
-                lines.append(f"{i}. {name} ({duration}, {priority})")
-            else:
-                lines.append(f"{i}. {name}")
-        return "\n".join(lines)
-    
-    elif output_format == "vocal":
-        if len(tasks) == 1:
-            props = tasks[0]["properties"]
-            name = props["Nom"]["title"][0]["plain_text"]
-            duration = props["⏱️ Durée"]["select"]["name"]
-            priority = props["🎯 Priorité"]["select"]["name"]
-            return f"Je te suggère de faire : {name}. Cette tâche prendra {duration} et est de priorité {priority}."
-        else:
-            intro = f"J’ai trouvé {len(tasks)} tâches que tu peux faire : "
-            suggestions = []
-            for i, task in enumerate(tasks, 1):
-                props = task["properties"]
-                name = props["Nom"]["title"][0]["plain_text"]
-                if include_details:
-                    duration = props["⏱️ Durée"]["select"]["name"]
-                    priority = props["🎯 Priorité"]["select"]["name"]
-                    suggestions.append(f"{i}. {name} ({duration}, {priority})")
-                else:
-                    suggestions.append(f"{i}. {name}")
-            return intro + ". ".join(suggestions)
-    
+        print("  Aucune tâche ne correspond à ce contexte.")
+        print()
+        print("  Conseils : élargir le support ou le pays, ou vérifier le Master Board.")
+        return
+
+    for i, t in enumerate(tasks, 1):
+        nom = get_prop(t, "Nom de la tâche", "title") or "(sans titre)"
+        prio = get_prop(t, "Priorité", "select") or ""
+        dur = get_prop(t, "Durée", "select") or ""
+        sup = ", ".join(get_prop(t, "Support", "multi_select") or [])
+        ech = get_prop(t, "Échéance", "date") or ""
+        details = " | ".join(x for x in [dur, prio, sup, ech] if x)
+        print(f"{i}. {nom}  [{details}]")
+
+    print()
+    print(
+        f">>> Construis un mini-agenda pour cette session.\n"
+        f"    Budget total : {budget_str}.\n"
+        f"    Règles :\n"
+        f"    - Remplis le budget au maximum sans dépasser\n"
+        f"    - Ajoute une pause de 10 min si la session dépasse 1h30\n"
+        f"    - Ordre de priorité : Priorité > Durée courte > Échéance\n"
+        f"    - Présente sous forme d'agenda avec les horaires (ex: 09:00 Tâche A — 30 min)\n"
+        f"    - Si des tâches restent, liste-les en 'réserve' pour plus tard"
+    )
+
+
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Session Planning interactif depuis le Master Board Notion"
+    )
+    parser.add_argument("--temps", metavar="DUREE", help="Ex: 3h, 45min, 1h30")
+    parser.add_argument("--support", nargs="+", metavar="S", help="Ex: Téléphone 'PC Portable'")
+    parser.add_argument("--pays", metavar="P", help="Ex: Thaïlande France Global")
+    parser.add_argument("--context", metavar="TEXTE", help="Contexte libre additionnel")
+    args = parser.parse_args()
+
+    if args.temps:
+        budget = parse_time(args.temps)
+        if not budget:
+            print(f"ERREUR : Durée non reconnue : {args.temps}", file=sys.stderr)
+            sys.exit(1)
+        supports = args.support
+        pays = args.pays
+        contexte = args.context or ""
     else:
-        raise ValueError(f"Format de sortie non supporté: {output_format}")
+        budget, supports, pays, contexte = prompt_interactif()
 
+    print(f"\n[Notion] Connexion...", file=sys.stderr)
+    notion = get_notion()
+    all_tasks = fetch_all(notion)
+    print(f"[Notion] {len(all_tasks)} tâches chargées.", file=sys.stderr)
 
-def get_contextual_suggestions_with_calendar(
-    pays: Optional[str] = None,
-    supports: Optional[List[str]] = None,
-    available_time_min: Optional[int] = None,
-    max_suggestions: int = 3,
-    calendar_events: Optional[List[Dict[str, Any]]] = None,
-    database_id: Optional[str] = None
-) -> List[Dict[str, Any]]:
-    """
-    Propose des tâches en tenant compte des événements Google Calendar pour éviter les chevauchements.
-    
-    Args:
-        pays: Pays/Lieu actuel.
-        supports: Liste des supports disponibles.
-        available_time_min: Temps disponible en minutes.
-        max_suggestions: Nombre maximal de suggestions.
-        calendar_events: Liste des événements Calendar (format Google API).
-        database_id: ID de la base Notion.
-    
-    Returns:
-        List[Dict[str, Any]]: Liste des tâches suggérées, en excluant celles qui chevauchent avec des événements.
-    
-    Note:
-        Cette fonction suppose que `calendar_events` est une liste d'événements avec des clés 'start' et 'end'.
-        Exemple d'événement : {"start": {"dateTime": "2026-06-30T14:00:00+07:00"}, "end": {"dateTime": "2026-06-30T15:00:00+07:00"}}
-    """
-    # Récupérer les suggestions initiales
-    suggestions = get_contextual_suggestions(
-        pays=pays,
-        supports=supports,
-        available_time_min=available_time_min,
-        max_suggestions=max_suggestions * 2,  # Récupérer plus de suggestions pour tenir compte des chevauchements
-        database_id=database_id
-    )
-    
-    if not calendar_events:
-        return suggestions[:max_suggestions]
-    
-    # Filtrer les tâches qui chevauchent avec des événements Calendar
-    filtered_suggestions = []
-    now = get_current_time()
-    
-    for task in suggestions:
-        task_duration_min = duration_to_minutes(task["properties"]["⏱️ Durée"]["select"]["name"])
-        
-        # Supposons que la tâche commence maintenant (on pourrait aussi utiliser une date de début si disponible)
-        task_start = now
-        task_end = task_start + timedelta(minutes=task_duration_min)
-        
-        # Vérifier les chevauchements avec les événements Calendar
-        has_conflict = False
-        for event in calendar_events:
-            event_start_str = event.get("start", {}).get("dateTime", event.get("start", {}).get("date"))
-            event_end_str = event.get("end", {}).get("dateTime", event.get("end", {}).get("date"))
-            
-            if not event_start_str or not event_end_str:
-                continue
-            
-            try:
-                # Parser les dates de l'événement (format ISO 8601)
-                if "T" in event_start_str:
-                    event_start = datetime.fromisoformat(event_start_str)
-                    event_end = datetime.fromisoformat(event_end_str)
-                else:
-                    event_start = datetime.strptime(event_start_str, "%Y-%m-%d")
-                    event_end = datetime.strptime(event_end_str, "%Y-%m-%d") + timedelta(days=1)
-                
-                # Vérifier le chevauchement
-                if task_start < event_end and task_end > event_start:
-                    has_conflict = True
-                    break
-            except ValueError:
-                continue
-        
-        if not has_conflict:
-            filtered_suggestions.append(task)
-    
-    logger.info(f"Filtré {len(suggestions) - len(filtered_suggestions)} tâches en raison de chevauchements Calendar")
-    return filtered_suggestions[:max_suggestions]
+    durees_ok = durees_dans_budget(budget)
+    tasks = filter_and_sort(all_tasks, supports, durees_ok, pays)
 
+    build_prompt(tasks, budget, supports, pays, contexte)
 
-def smart_suggestions(
-    query: str,
-    database_id: Optional[str] = None
-) -> Dict[str, Any]:
-    """
-    Interprète une requête naturelle et retourne des suggestions intelligentes.
-    
-    Args:
-        query: Requête de l'utilisateur (ex: "J’ai 45 min sur mon téléphone en Thaïlande").
-        database_id: ID de la base Notion.
-    
-    Returns:
-        Dict[str, Any]: Dictionnaire avec :
-            - suggestions: Liste des tâches suggérées.
-            - formatted: Suggestions formatées (markdown, text, ou vocal).
-            - context: Contexte extrait de la requête.
-    
-    Exemple:
-        >>> result = smart_suggestions("J’ai 1h sur mon PC portable en France")
-        >>> print(result["formatted"])
-    """
-    # Extraire le contexte de la requête (simplifié)
-    context = {
-        "pays": None,
-        "supports": [],
-        "available_time_min": None,
-        "output_format": "markdown"
-    }
-    
-    # Analyser la requête (exemple basique, à améliorer avec NLP)
-    query_lower = query.lower()
-    
-    # Extraire le temps disponible
-    time_keywords = {
-        "10 min": 10,
-        "30 min": 30,
-        "1h": 60,
-        "1 heure": 60,
-        "2h": 120,
-        "2 heures": 120,
-        "demi-journée": 240,
-        "1 jour": 480
-    }
-    
-    for keyword, minutes in time_keywords.items():
-        if keyword in query_lower:
-            context["available_time_min"] = minutes
-            break
-    
-    # Extraire les supports
-    support_keywords = {
-        "téléphone": "Téléphone",
-        "mobile": "Téléphone",
-        "pc portable": "PC Portable",
-        "laptop": "PC Portable",
-        "pc fixe": "PC Fixe",
-        "desktop": "PC Fixe",
-        "tablette": "Tablette"
-    }
-    
-    for keyword, support in support_keywords.items():
-        if keyword in query_lower:
-            context["supports"].append(support)
-    
-    # Extraire le pays
-    country_keywords = {
-        "thaïlande": "Thaïlande",
-        "france": "France",
-        "saudi": "Saudi Arabia",
-        "arabie saoudite": "Saudi Arabia",
-        "bangkok": "Thaïlande",
-        "paris": "France"
-    }
-    
-    for keyword, country in country_keywords.items():
-        if keyword in query_lower:
-            context["pays"] = country
-            break
-    
-    # Déterminer le format de sortie (par défaut: markdown)
-    if "vocal" in query_lower or "dire" in query_lower or "lire" in query_lower:
-        context["output_format"] = "vocal"
-    elif "texte" in query_lower:
-        context["output_format"] = "text"
-    
-    # Récupérer les suggestions
-    suggestions = get_contextual_suggestions(
-        pays=context["pays"],
-        supports=context["supports"],
-        available_time_min=context["available_time_min"],
-        database_id=database_id
-    )
-    
-    # Formater les suggestions
-    formatted = format_suggestions(suggestions, output_format=context["output_format"])
-    
-    return {
-        "suggestions": suggestions,
-        "formatted": formatted,
-        "context": context
-    }
-
-
-# ======================
-# Exemples d'Utilisation
-# ======================
 
 if __name__ == "__main__":
-    print("🎯 Exemples d'utilisation du filtre contextuel\n")
-    
-    # Exemple 1: Requête basique
-    print("📌 Exemple 1: Requête basique")
-    print("Requête: 'J’ai 45 min sur mon téléphone en Thaïlande'")
-    result = smart_suggestions("J’ai 45 min sur mon téléphone en Thaïlande")
-    print("Contexte extrait:", result["context"])
-    print("\nSuggestions formatées (Markdown):")
-    print(result["formatted"])
-    print()
-    
-    # Exemple 2: Requête avec priorité
-    print("📌 Exemple 2: Requête avec priorité")
-    print("Requête: 'Quelles tâches urgentes puis-je faire sur mon PC portable ?'")
-    result = smart_suggestions("Quelles tâches urgentes puis-je faire sur mon PC portable ?")
-    print("Contexte extrait:", result["context"])
-    print("\nSuggestions formatées (Texte):")
-    # Forcer le format texte pour l'exemple
-    result["formatted"] = format_suggestions(result["suggestions"], output_format="text")
-    print(result["formatted"])
-    print()
-    
-    # Exemple 3: Requête vocale
-    print("📌 Exemple 3: Requête vocale")
-    print("Requête: 'Dis-moi ce que je peux faire en 30 min'")
-    result = smart_suggestions("Dis-moi ce que je peux faire en 30 min")
-    print("Contexte extrait:", result["context"])
-    print("\nSuggestions formatées (Vocal):")
-    # Forcer le format vocal pour l'exemple
-    result["formatted"] = format_suggestions(result["suggestions"], output_format="vocal")
-    print(result["formatted"])
-    print()
-    
-    # Exemple 4: Filtrage manuel
-    print("📌 Exemple 4: Filtrage manuel")
-    suggestions = get_contextual_suggestions(
-        pays="Thaïlande",
-        supports=["Téléphone", "PC Portable"],
-        available_time_min=60,
-        min_priority="Important"
-    )
-    print(f"Trouvé {len(suggestions)} tâches correspondantes")
-    print("\nTableau Markdown:")
-    print(format_suggestions(suggestions, output_format="markdown"))
-```
-
----
-
-## 📝 **Explications**
-
-### **1. `get_contextual_suggestions()`**
-- **Fonction principale** pour récupérer des suggestions de tâches en fonction du contexte.
-- **Paramètres** :
-  - `pays` : Pays/Lieu actuel (ex: "Thaïlande").
-  - `supports` : Liste des supports disponibles (ex: ["Téléphone"]).
-  - `available_time_min` : Temps disponible en minutes (ex: 45).
-  - `max_suggestions` : Nombre maximal de suggestions (par défaut: 3).
-  - `exclude_status` : Statut à exclure (par défaut: "Terminé").
-  - `min_priority` : Priorité minimale (ex: "Important").
-  - `context_keywords` : Mots-clés de contexte pour filtrer les tâches.
-- **Retourne** : Liste des tâches suggérées, triées par priorité et durée.
-
----
-
-### **2. `format_suggestions()`**
-- Formate les suggestions selon le **format souhaité** :
-  - **`markdown`** : Tableau Markdown (pour les widgets Notion).
-  - **`text`** : Liste texte simple.
-  - **`vocal`** : Phrase adaptée pour une sortie vocale (ex: via Google TTS).
-
----
-
-### **3. `get_contextual_suggestions_with_calendar()`**
-- **Filtrage avancé** qui tient compte des **événements Google Calendar** pour éviter les chevauchements.
-- **Exemple** : Si un événement est prévu de 14h à 15h, une tâche de 1h ne sera pas suggérée à 14h.
-
----
-
-### **4. `smart_suggestions()`**
-- **Interprète une requête naturelle** (ex: "J’ai 45 min sur mon téléphone en Thaïlande") et extrait le contexte.
-- **Utilise une analyse basique** (à améliorer avec NLP ou une IA comme Mistral).
-- **Retourne** :
-  - `suggestions` : Liste des tâches suggérées.
-  - `formatted` : Suggestions formatées selon le format détecté.
-  - `context` : Contexte extrait de la requête.
-
----
-
-## 🚀 **Utilisation**
-
-### **1. Requête Basique**
-```python
-from automation.context_filter import get_contextual_suggestions, format_suggestions
-
-# Récupérer des suggestions
-suggestions = get_contextual_suggestions(
-    pays="Thaïlande",
-    supports=["Téléphone"],
-    available_time_min=45
-)
-
-# Afficher en Markdown
-print(format_suggestions(suggestions, output_format="markdown"))
-```
-
----
-
-### **2. Requête Naturelle (Smart Suggestions)**
-```python
-from automation.context_filter import smart_suggestions
-
-# Interpréter une requête naturelle
-result = smart_suggestions("J’ai 1h sur mon PC portable en France")
-
-# Afficher les suggestions formatées
-print(result["formatted"])
-```
-
----
-
-### **3. Avec Google Calendar**
-```python
-from automation.context_filter import get_contextual_suggestions_with_calendar
-
-# Supposons que calendar_events est une liste d'événements Google Calendar
-calendar_events = [
-    {
-        "start": {"dateTime": "2026-06-30T14:00:00+07:00"},
-        "end": {"dateTime": "2026-06-30T15:00:00+07:00"}
-    }
-]
-
-# Récupérer des suggestions sans chevauchement
-suggestions = get_contextual_suggestions_with_calendar(
-    pays="Thaïlande",
-    supports=["PC Portable"],
-    available_time_min=60,
-    calendar_events=calendar_events
-)
-```
-
----
-
-### **4. Intégration avec Gemini/Mistral**
-```python
-from automation.context_filter import smart_suggestions
-
-# Utiliser avec une IA pour interpréter la requête
-user_query = "Qu’est-ce que je peux faire de productif avec 30 min sur mon téléphone ?"
-
-# Obtenir des suggestions
-result = smart_suggestions(user_query)
-
-# Envoyer la réponse à l'utilisateur (ex: via vocal ou email)
-print(result["formatted"])
-```
-
----
-
-## ✅ **Bonnes Pratiques**
-
-1. **Toujours vérifier les paramètres** : Assurez-vous que `pays`, `supports`, et `available_time_min` sont valides.
-2. **Limiter le nombre de suggestions** : `max_suggestions=3` est un bon défaut pour éviter la surcharge.
-3. **Gérer les erreurs** : Utilisez `try/except` pour capturer les erreurs de filtrage ou de tri.
-4. **Journaliser les actions** : Utilisez `logger.info()` pour suivre les requêtes et les résultats.
-5. **Optimiser les requêtes** : Cachez les résultats si la même requête est faite plusieurs fois.
-
----
-
-## 📚 **Ressources**
-- [Notion API Query Documentation](https://developers.notion.com/docs/working-with-databases#querying-a-database)
-- [Python `datetime` Documentation](https://docs.python.org/3/library/datetime.html)
-- [Natural Language Processing with Python](https://realpython.com/nltk-nlp-python/) (pour améliorer `smart_suggestions`)
-- [Google Calendar API Events](https://developers.google.com/calendar/api/v3/reference/events)
+    main()

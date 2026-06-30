@@ -94,3 +94,43 @@ Format d'une entrée :
 - **Weekly Digest → Daily Digest** : la fréquence de départ est quotidienne, ajustable dans le temps selon l'usage réel
 - Le digest est déclenché manuellement via IA (pas de cron/automatisme au départ) — flexibilité maximale
 - Stocké dans une base Notion "Daily Digest"
+
+---
+
+## 2026-06-30 — Claude (Claude Code — session Notion + scripts)
+
+### Actions effectuées
+
+**Notion (via MCP)**
+- Ajout de la propriété **Priorité** au Master Board (type SELECT, valeurs : 🔴 Urgent / 🟠 Important / 🟡 Secondaire / ⚪ Optionnel)
+- Création de **12 tâches d'exemple** dans le Master Board avec toutes les propriétés renseignées (Durée, Support, Pays/Lieu, Statut, Priorité, Catégorie)
+- Création de la base **Daily Digest** :
+  - URL : https://app.notion.com/p/30342149a740489f9cb85b99e82e7486
+  - Data Source ID : `collection://83292ab8-5336-4e77-90f4-811ef80a9a7f`
+  - Propriétés : Date (DATE), Résumé (RICH_TEXT), Tâches terminées (NUMBER), Temps total (RICH_TEXT), Observations (RICH_TEXT)
+
+**Scripts Python (refonte complète)**
+
+Tous les scripts existants étaient du markdown déguisé en Python — réécrits comme code Python réel et fonctionnel :
+
+- `scripts/notion_api/fetch_tasks.py` — outil CLI principal avec modes :
+  - `--done` : tâches terminées → prompt Daily Digest
+  - `--zombie` : tâches bloquées > 21j → prompt nettoyage
+  - `--support`, `--duree`, `--pays` : filtre contextuel → prompt Session Planning
+  - tri par Priorité > Durée > Échéance, noms de propriétés réels
+- `scripts/automation/context_filter.py` — Session Planning interactif (questions-réponses si sans args, CLI si avec args)
+- `scripts/automation/daily_digest.py` — **nouveau** : digest quotidien avec stats (terminé/en cours/en pause)
+- `scripts/automation/zombie_cleanup.py` — **nouveau** : tâches "Pas commencé" > N jours avec prompt de décision
+- `scripts/utils/config.py` — module Python réel (chargement .env, client Notion)
+- `scripts/utils/helpers.py` — utilitaires Python réels (get_prop, filter_active, sort_by_priority)
+- `scripts/utils/logger.py` — logger minimal fonctionnel
+- `.env.example` — converti en vrai fichier .env template (plus du markdown)
+- `requirements.txt` — créé (notion-client, python-dotenv)
+
+### Décisions prises
+- Scripts **standalone** (pas d'imports croisés entre scripts) → pas de problème de PYTHONPATH pour l'utilisateur
+- `.env.example` contient les IDs réels des bases (Master Board + Daily Digest) comme référence
+
+### En attente de validation
+- Tester les scripts avec le vrai NOTION_TOKEN (à configurer dans `.env` local)
+- Valider que l'intégration Notion a bien accès aux deux bases (Master Board + Daily Digest)
