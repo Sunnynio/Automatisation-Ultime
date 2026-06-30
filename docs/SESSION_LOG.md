@@ -134,3 +134,23 @@ Tous les scripts existants étaient du markdown déguisé en Python — réécri
 ### En attente de validation
 - Tester les scripts avec le vrai NOTION_TOKEN (à configurer dans `.env` local)
 - Valider que l'intégration Notion a bien accès aux deux bases (Master Board + Daily Digest)
+
+---
+
+## 2026-06-30 — Claude (Claude Code — session Routines)
+
+### Actions effectuées
+
+**Notion (via MCP)**
+- Création de la page parente **Routines** :
+  - URL : https://app.notion.com/p/38fcace54fe1811cb644eb50e95fc648
+- Création de la page **☀️ Routine du Matin** (sous Routines) avec 5 cases à cocher :
+  - URL : https://app.notion.com/p/38fcace54fe1819e8b68f3208b6c7d1c
+  - Café / Étirements / Flexions·Pompes / Vitamines / Cours de thaï
+- Création de la page **✈️ Avant Aéroport** (sous Routines) avec 9 cases à cocher :
+  - URL : https://app.notion.com/p/38fcace54fe1819fa390d727895c733e
+  - Billets / Hôtel / Passeport / Adaptateur / Chargeurs / Clés / Clim OFF / Lumières OFF / Fenêtres OFF
+
+### En attente de validation
+- Déplacer la page Routines dans le bon endroit du workspace (actuellement à la racine en page privée)
+- Configurer les widgets sur mobile/PC depuis ces URLs

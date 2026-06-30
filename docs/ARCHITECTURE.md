@@ -19,6 +19,10 @@
   - URL : https://app.notion.com/p/30342149a740489f9cb85b99e82e7486
   - Data Source ID : `collection://83292ab8-5336-4e77-90f4-811ef80a9a7f`
   - Propriétés : Date (DATE), Résumé (RICH_TEXT), Tâches terminées (NUMBER), Temps total (RICH_TEXT), Observations (RICH_TEXT)
+- **Page "Routines"** (parent) :
+  - URL : https://app.notion.com/p/38fcace54fe1811cb644eb50e95fc648
+  - **☀️ Routine du Matin** : https://app.notion.com/p/38fcace54fe1819e8b68f3208b6c7d1c
+  - **✈️ Avant Aéroport** : https://app.notion.com/p/38fcace54fe1819fa390d727895c733e
 
 ---
 
