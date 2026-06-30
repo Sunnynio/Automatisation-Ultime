@@ -1,0 +1,116 @@
+# 🚫 Fichiers et Dossiers à Ignorer
+
+> **Pourquoi ce fichier ?**
+> `.gitignore` empêche Git de suivre (et donc de commiter) certains fichiers ou dossiers.
+> Cela inclut les fichiers sensibles (tokens, clés API), les fichiers temporaires, ou les dépendances locales.
+
+---
+
+## 🔒 **Fichiers Sensibles (À NE JAMAIS COMMITER)**
+
+# Variables d'environnement (contiennent des tokens API)
+.env
+.env.local
+.env.*.local
+
+# Fichiers de configuration avec des secrets
+config.ini
+secrets.yml
+credentials.json
+client_secret_*.json
+
+# Clés API ou tokens en texte brut
+*.key
+*.pem
+*.crt
+
+---
+
+## 🗃️ **Dossiers et Fichiers Temporaires**
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# IDE (PyCharm, VSCode, etc.)
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS (macOS, Linux, Windows)
+.DS_Store
+Thumbs.db
+
+---
+
+## 📦 **Dépendances et Logs**
+
+# Logs
+*.log
+logs/
+
+# Dossier de données locales (cache, etc.)
+/data/
+*.sqlite
+
+---
+
+## 📝 **Fichiers de Build et Outputs**
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# Outputs de scripts (ex: rapports générés)
+/output/
+/reports/
+
+---
+
+## 🛠️ **Autres**
+
+# Fichiers de test ou exemples
+*.test
+*.example
+
+# Fichiers de backup
+*.bak
+*.backup
+
+---
+
+> **⚠️ Bonnes Pratiques**
+> - **Vérifiez toujours** `git status` avant de commiter.
+> - Utilisez `git check-ignore -v <fichier>` pour vérifier si un fichier est ignoré.
+> - Pour les fichiers sensibles déjà commités : utilisez `git rm --cached <fichier>` puis ajoutez-les à `.gitignore`.
+
+---
+
+> **Ressources** :
+> - [GitHub .gitignore Templates](https://github.com/github/gitignore)
+> - [Documentation Git ignore](https://git-scm.com/docs/gitignore)
