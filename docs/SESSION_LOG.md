@@ -150,7 +150,74 @@ Tous les scripts existants étaient du markdown déguisé en Python — réécri
 - Création de la page **✈️ Avant Aéroport** (sous Routines) avec 9 cases à cocher :
   - URL : https://app.notion.com/p/38fcace54fe1819fa390d727895c733e
   - Billets / Hôtel / Passeport / Adaptateur / Chargeurs / Clés / Clim OFF / Lumières OFF / Fenêtres OFF
+- **Déplacement** de la page Routines à la racine du workspace (elle avait été mise par erreur dans le Master Board)
 
 ### En attente de validation
-- Déplacer la page Routines dans le bon endroit du workspace (actuellement à la racine en page privée)
 - Configurer les widgets sur mobile/PC depuis ces URLs
+
+---
+
+## 2026-06-30 — Franck + Claude (Claude Code — brainstorming tâches pro)
+
+### Décisions prises
+
+**Architecture deux niveaux pour les tâches professionnelles**
+- **Master Board** = toutes les actions (perso + pro), source de vérité unique
+- **Projets DB** = base dédiée aux gros projets multi-étapes (avec suivi client, statut, budget)
+- Lien : propriété RELATION bidirectionnelle entre les deux bases (Master Board → Projets, Projets → Tâches)
+- Pas de base Clients pour l'instant (solo) — champ Client en SELECT dans Projets, upgradable en RELATION plus tard
+
+---
+
+## 2026-06-30 — Claude (Claude Code — session Projets DB + tâches pro)
+
+### Actions effectuées
+
+**Notion (via MCP)**
+
+**Base Projets créée** :
+  - URL : https://app.notion.com/p/a1b22b74a7414247a190eb999423a5d8
+  - Data Source ID : `collection://f4717411-7e57-41b2-9023-90effa022bad`
+  - Propriétés : Nom du projet (TITLE), Client (SELECT), Statut projet (SELECT), Priorité projet (SELECT), Budget (RICH_TEXT), Deadline (DATE), Notes (RICH_TEXT), Tâches (RELATION → Master Board)
+
+**Relation bidirectionnelle configurée** :
+  - Master Board : propriété **Projet** (RELATION → Projets DB)
+  - Projets DB : propriété **Tâches** (RELATION → Master Board, sens inverse automatique)
+
+**Projets créés dans la base Projets** :
+  - **PTT LNG** : https://app.notion.com/p/38fcace54fe1810f8beec6b501209f2d
+    - Client : PTT, Statut : En cours, Priorité : 🔴 Urgent
+  - **Siam Paragon** : https://app.notion.com/p/38fcace54fe18125ab44e8e2a0cd4339
+    - Client : Siam Paragon, Statut : En cours, Priorité : 🟠 Important
+
+**Options Durée étendues dans le Master Board** :
+  - Ajout de "1h30" et "2h" aux options SELECT existantes (10 min, 30 min, 1h, Demi-journée, 1 jour +)
+
+**10 tâches créées dans le Master Board**, toutes liées à leur projet via la relation Projet :
+
+  *PTT LNG (5 tâches)* :
+  - Analyse des besoins PTT LNG — 2h, PC Portable, Thaïlande, 🔴 Urgent
+  - Préparer la proposition commerciale PTT LNG — 1 jour +, PC Portable, Global, 🔴 Urgent
+  - Présentation initiale PTT LNG — 1h, PC Portable, Thaïlande, 🔴 Urgent
+  - Rédiger le rapport technique PTT LNG — Demi-journée, PC Portable, Global, 🟠 Important
+  - Suivi hebdomadaire PTT LNG — 30 min, Téléphone, Global, 🟡 Secondaire
+
+  *Siam Paragon (5 tâches)* :
+  - Analyse des besoins Siam Paragon — 2h, PC Portable, Thaïlande, 🟠 Important
+  - Préparer le devis Siam Paragon — Demi-journée, PC Portable, Global, 🟠 Important
+  - Visite du site Siam Paragon — 2h, Téléphone, Thaïlande, 🔴 Urgent
+  - Présentation de la solution Siam Paragon — 1h, PC Portable, Thaïlande, 🟠 Important
+  - Planification des interventions Siam Paragon — 1h30, PC Portable, Global, 🟡 Secondaire
+
+  Toutes les tâches : Catégorie=Travail, Statut=Pas commencé
+
+### Décisions prises
+- Architecture deux niveaux actée (voir session brainstorming ci-dessus)
+- SELECT Client dans Projets (pas de base Clients dédiée pour l'instant)
+- Pas de propriété "Projet" visible dans les tâches perso (inutilisée = non gênante)
+
+### En attente de validation
+- Vérifier dans Notion que la relation Projet est bien visible sur chaque tâche
+- Configurer une vue "Par projet" dans le Master Board (filtre Catégorie=Travail groupé par Projet)
+- Tester les scripts Python avec NOTION_TOKEN réel (`.env` à configurer en local)
+- Vérifier que l'intégration Notion a accès à la base Projets (partager la base avec l'intégration)

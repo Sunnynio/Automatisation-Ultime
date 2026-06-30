@@ -27,39 +27,83 @@ Google Calendar                    Notion (Master Board)
                                Gemini                  Mistral / Claude
                           (interface principale)    (automatisation, analyse)
                           voix/texte, GPS, Google   scripts Python, livrables,
-                          Calendar, Gmail, Drive     weekly digest, zombie cleanup
+                          Calendar, Gmail, Drive     daily digest, zombie cleanup
 ```
 
 > **Principe acté** : Calendar et Notion sont deux espaces distincts, pas synchronisés. Calendar gère les événements fixes (réunions, vols, rendez-vous). Notion gère les tâches et projets. Pas de sync bidirectionnelle — trop fragile, trop de maintenance.
 
 | Composant | Rôle |
 |---|---|
-| **Notion** | Source de vérité unique (Master Board + Routines), widgets visuels |
+| **Notion** | Source de vérité unique (Master Board + Projets + Routines), widgets visuels |
 | **Google Calendar** | Événements fixes uniquement — time blocking manuel |
 | **Gemini** | Interface quotidienne, filtrage GPS, accès écosystème Google |
-| **Mistral / Claude** | Analyse, weekly digest, nettoyage zombie, exécution à la demande |
+| **Mistral / Claude** | Analyse, daily digest, nettoyage zombie, exécution à la demande |
 
 ---
 
-## Schéma de la base Notion "Master Board"
+## Architecture Notion — deux niveaux
+
+```
+Master Board (toutes les tâches — perso + pro)
+       │
+       │  propriété RELATION "Projet"
+       │
+       ▼
+Projets DB (gros projets multi-étapes)
+   - Nom du projet
+   - Client (SELECT)
+   - Statut projet
+   - Priorité projet
+   - Budget / Deadline
+   - Tâches (RELATION inverse → Master Board)
+```
+
+**Règles d'usage** :
+- Une **action isolée** (email, appel, doc court) → Master Board uniquement, sans Projet rattaché
+- Un **gros projet** (plusieurs semaines, plusieurs étapes, client identifié) → créer une entrée Projets + y rattacher toutes les tâches du Master Board
+- Les tâches **perso** restent dans le Master Board, sans Projet (relation vide = OK)
+
+**Projets actifs** (au 30/06/2026) :
+- **PTT LNG** — Client : PTT, statut : En cours
+- **Siam Paragon** — Client : Siam Paragon, statut : En cours
+
+---
+
+## Schéma des bases Notion
+
+### Master Board
 
 Propriétés minimales requises pour le filtrage contextuel (garder la liste courte — risque de friction à la saisie) :
 
 | Propriété | Type | Valeurs |
 |---|---|---|
 | **Nom** | Titre | Libre |
-| **Durée** | Sélection | 10 min / 30 min / 1h / 1h30 / 2h / Demi-journée / 1 jour+ |
+| **Durée** | Sélection | 10 min / 30 min / 1h / 1h30 / 2h / Demi-journée / 1 jour + |
 | **Support** | Sélection multiple | PC Portable / PC Fixe / Téléphone / Tablette / Global |
 | **Pays/Lieu** | Sélection | Global / Thaïlande / France / Saudi Arabia / Avion / Hôtel / … |
 | **Statut** | Kanban | Pas commencé / En cours / En pause / À déléguer à l'IA / En attente validation / Terminé |
-| **Priorité** | Sélection | Urgent / Important / Secondaire / Optionnel |
-| **Échéance** | Date | JJ/MM/AAAA — à valider (ajoutée par Claude web le 30/06) |
-| **Catégorie** | Sélection | À définir — ajoutée par Claude web le 30/06, à valider |
-| **Notes** | Texte | Libre — ajoutée par Claude web le 30/06, à valider |
+| **Priorité** | Sélection | 🔴 Urgent / 🟠 Important / 🟡 Secondaire / ⚪ Optionnel |
+| **Catégorie** | Sélection | Travail / Perso / Voyage / Admin / … |
+| **Projet** | Relation | → base Projets (vide pour les tâches perso, requis pour tâches pro rattachées à un projet) |
+| **Échéance** | Date | JJ/MM/AAAA |
+| **Notes** | Texte | Libre |
 
 Propriétés optionnelles (ajouter seulement si le besoin est prouvé) : Récurrence, Contexte, Heure de la journée, Dépendances, Délégable à l'IA, Statut IA, Livrable.
 
-> Propriétés Points et Temps Réel (gamification) : **à supprimer** — la gamification par points est abandonnée au profit du Weekly Digest.
+> Propriétés Points et Temps Réel (gamification) : **à supprimer** — la gamification par points est abandonnée au profit du Daily Digest.
+
+### Base Projets
+
+| Propriété | Type | Notes |
+|---|---|---|
+| **Nom du projet** | Titre | Libre |
+| **Client** | Sélection | PTT / Siam Paragon / … (upgradable en RELATION si collaboration) |
+| **Statut projet** | Sélection | Prospect / En cours / En pause / Terminé / Archivé |
+| **Priorité projet** | Sélection | 🔴 Urgent / 🟠 Important / 🟡 Secondaire |
+| **Budget** | Texte | Libre (pas de calcul automatique pour l'instant) |
+| **Deadline** | Date | Date cible de livraison |
+| **Notes** | Texte | Contexte, historique, liens utiles |
+| **Tâches** | Relation | ← Master Board (sens inverse automatique de la propriété Projet) |
 
 ---
 
