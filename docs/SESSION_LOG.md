@@ -56,3 +56,32 @@ Format d'une entrée :
 - Maintien de `docs/architecture.md` (doc de design avec diagrammes Mermaid) sans modification
 - Ajout de `docs/ARCHITECTURE.md` (état réel) comme document séparé
 - README.md converti en index de navigation léger (contenu riche préservé dans docs/)
+
+---
+
+## 2026-06-30 — Franck + Claude (Claude Code — session brainstorming scope)
+
+### Décisions prises
+
+**Architecture**
+- **Pas de sync bidirectionnelle Calendar↔Notion** — décision définitive. Google Calendar = événements fixes. Notion = tâches. Deux espaces distincts, pas reliés techniquement. Make.com non utilisé pour la sync.
+- La taxonomie de propriétés du Master Board est à surveiller : ne pas la laisser grossir sans contrôle, risque de friction à la saisie.
+
+**Délégation IA**
+- La délégation reste **manuelle** pour l'instant : Franck bascule lui-même le statut "À déléguer à l'IA", puis interpelle l'IA de son choix. Pas de polling/webhook autonome dans le scope actuel.
+
+**Scope des workflows — validés et reformulés**
+
+| Workflow | Statut | Notes |
+|---|---|---|
+| Session Planning (ex-filtre contextuel) | Validé | "J'ai 3h" → l'IA construit un mini-agenda pour toute la session, pas juste une tâche |
+| Capture d'abord, tri ensuite | Validé | Mode saisie ultra-rapide (titre seul), enrichissement des propriétés différé via IA |
+| Routines (Matin / Soir / Voyage) | Validé | Inchangé |
+| Weekly Digest (remplace Gamification) | Validé | Résumé hebdo des patterns réels ("tu travailles 3x mieux le matin"), pas de points/badges |
+| Nettoyage zombie | Validé | Remontée hebdo des tâches "Pas commencé" depuis > 21 jours pour archiver ou décomposer |
+| Délégation manuelle | Validé | Franck délègue manuellement, l'IA exécute à la demande — pas d'autonomie |
+| Notion natif en premier | Validé | Tester les filtres sauvegardés Notion avant d'écrire tout script Python |
+
+### En attente de validation
+- Propriétés Catégorie, Échéance, Notes (créées par Claude web) — toujours à valider
+- Supprimer ou archiver les propriétés Points / Temps Réel du schéma Master Board (gamification supprimée)

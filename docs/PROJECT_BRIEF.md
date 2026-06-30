@@ -8,40 +8,42 @@
 ## Vision
 
 Créer un **Centre de Commande Personnel** pour un grand voyageur (Franck, profil multi-pays / multi-supports) qui combine :
-- **Capture rapide** des tâches (vocale ou écrite via une IA interface)
-- **Exécution intelligente** : filtrage contextuel selon le temps disponible, le support et la localisation
+- **Capture rapide** des tâches (vocale ou écrite, avec tri différé par l'IA)
+- **Exécution intelligente** : session planning selon le temps disponible, le support et la localisation
 - **Interface visuelle minimaliste** (widgets sur téléphone/PC) sans interaction obligatoire
-- **Délégation partielle** aux agents IA pour les tâches automatisables
+- **Délégation manuelle** aux agents IA pour les tâches qui le méritent
 
 ---
 
 ## Architecture cible
 
 ```
-Google Calendar  <──── sync bidirectionnelle ────>  Notion (Master Board)
-                                                           │
-                                                    Notion API / Make.com
-                                                           │
-                                              ┌────────────┴────────────┐
-                                         Gemini                      Mistral
-                                    (interface principale)       (automatisation)
-                                    voix/texte, GPS, Google      scripts Python,
-                                    Calendar, Gmail, Drive        analyse, livrables
+Google Calendar                    Notion (Master Board)
+(événements fixes)                 (tâches, source de vérité)
+       │                                      │
+  Time Blocking                         Notion API
+  (créneaux bloqués)                         │
+                                  ┌───────────┴───────────┐
+                               Gemini                  Mistral / Claude
+                          (interface principale)    (automatisation, analyse)
+                          voix/texte, GPS, Google   scripts Python, livrables,
+                          Calendar, Gmail, Drive     weekly digest, zombie cleanup
 ```
+
+> **Principe acté** : Calendar et Notion sont deux espaces distincts, pas synchronisés. Calendar gère les événements fixes (réunions, vols, rendez-vous). Notion gère les tâches et projets. Pas de sync bidirectionnelle — trop fragile, trop de maintenance.
 
 | Composant | Rôle |
 |---|---|
-| **Notion** | Source de vérité unique (Master Board), widgets visuels |
-| **Google Calendar** | Time Blocking, synchronisation avec Notion |
+| **Notion** | Source de vérité unique (Master Board + Routines), widgets visuels |
+| **Google Calendar** | Événements fixes uniquement — time blocking manuel |
 | **Gemini** | Interface quotidienne, filtrage GPS, accès écosystème Google |
-| **Mistral** | Exécution en arrière-plan, analyse de données, préparation de livrables |
-| **Make.com** | Orchestration no-code (prototype de sync Calendar↔Notion) |
+| **Mistral / Claude** | Analyse, weekly digest, nettoyage zombie, exécution à la demande |
 
 ---
 
 ## Schéma de la base Notion "Master Board"
 
-Chaque tâche doit inclure les propriétés suivantes pour permettre le filtrage contextuel par les IA :
+Propriétés minimales requises pour le filtrage contextuel (garder la liste courte — risque de friction à la saisie) :
 
 | Propriété | Type | Valeurs |
 |---|---|---|
@@ -50,30 +52,89 @@ Chaque tâche doit inclure les propriétés suivantes pour permettre le filtrage
 | **Support** | Sélection multiple | PC Portable / PC Fixe / Téléphone / Tablette / Global |
 | **Pays/Lieu** | Sélection | Global / Thaïlande / France / Saudi Arabia / Avion / Hôtel / … |
 | **Statut** | Kanban | Pas commencé / En cours / En pause / À déléguer à l'IA / En attente validation / Terminé |
-| **Catégorie** | Sélection | À définir — propriété ajoutée par Claude le 30/06/2026, à valider |
-| **Échéance** | Date | JJ/MM/AAAA |
-| **Notes** | Texte | Libre — propriété ajoutée par Claude le 30/06/2026, à valider |
 | **Priorité** | Sélection | Urgent / Important / Secondaire / Optionnel |
-| **Récurrence** | Sélection | Unique / Quotidienne / Hebdomadaire / Mensuelle / Voyage / … |
-| **Contexte** | Texte | Mots-clés (ex: "Admin", "Client X", "Apprentissage Thai") |
+| **Échéance** | Date | JJ/MM/AAAA — à valider (ajoutée par Claude web le 30/06) |
+| **Catégorie** | Sélection | À définir — ajoutée par Claude web le 30/06, à valider |
+| **Notes** | Texte | Libre — ajoutée par Claude web le 30/06, à valider |
 
-Propriétés supplémentaires validées (voir `brainstorming/decisions.md`) : Heure de la journée, Dépendances, Délégable à l'IA, Statut IA, Livrable, Date de Délégation, Date de Complétion, Temps Réel, Points.
+Propriétés optionnelles (ajouter seulement si le besoin est prouvé) : Récurrence, Contexte, Heure de la journée, Dépendances, Délégable à l'IA, Statut IA, Livrable.
+
+> Propriétés Points et Temps Réel (gamification) : **à supprimer** — la gamification par points est abandonnée au profit du Weekly Digest.
 
 ---
 
-## 4 Workflows cibles
+## Workflows validés (scope actuel)
 
-### 1. Filtre contextuel ("J'ai 1 heure à tuer")
-L'utilisateur indique son contexte (temps disponible, support, localisation). L'IA interroge Notion, croise avec Calendar, et retourne les 3 meilleures tâches triées par Priorité > Durée > Échéance.
+### Principe transversal : Notion natif d'abord
+Tester les filtres et vues sauvegardés dans Notion avant d'écrire tout script Python. Un filtre Notion "téléphone + global + < 30 min + pas commencé" couvre 80 % du besoin à 0 % de maintenance.
 
-### 2. Routines (Matin / Soir / Voyage)
-Checklists réutilisables dans une base Notion dédiée, liées au Master Board. Mistral génère un résumé de complétion en fin de journée et l'envoie par email.
+---
 
-### 3. Gamification (Journal de Bord)
-Suivi quotidien des tâches terminées (temps, points : 10 pts / 30 min). Résumé généré par Mistral et archivé dans une base "Journal de Bord" Notion. Bonus +50 % pour les tâches Urgent/Important.
+### 1. Capture d'abord, tri ensuite
+**Besoin** : capturer une tâche sans friction, même en déplacement.
 
-### 4. Délégation IA ("À déléguer à l'IA")
-Mistral détecte les tâches avec `Statut = À déléguer à l'IA`, les exécute (email, analyse, rapport), met à jour Notion (`Statut IA = Terminée`, lien livrable), et notifie l'utilisateur pour validation.
+**Fonctionnement** :
+- Saisie minimale : Nom + Durée (les autres propriétés restent vides)
+- Triage différé : une fois par semaine (ou à la demande), l'IA parcourt les entrées sans propriétés et propose des valeurs inférées
+- Franck valide en batch
+
+**Outils** : Notion (saisie rapide), IA (enrichissement des propriétés par batch)
+
+---
+
+### 2. Session Planning ("J'ai 3h devant moi")
+**Besoin** : structurer une session de travail complète, pas juste trouver une tâche.
+
+**Fonctionnement** :
+1. Franck indique son contexte : temps total, support, localisation
+2. L'IA interroge Notion (filtres Durée + Support + Pays + Statut ≠ Terminé)
+3. L'IA construit un mini-agenda pour toute la session (ex: tâche A 1h → pause → tâche B 45 min → tâche C 30 min)
+4. Tri : Priorité > Durée > Échéance
+
+**Algorithme de tri** : Priorité > Durée > Échéance (décidé le 30/06)
+
+---
+
+### 3. Routines (Matin / Soir / Voyage)
+**Besoin** : checklists réutilisables sans recréer les tâches.
+
+**Fonctionnement** :
+- Base Notion dédiée "Routines", liée au Master Board
+- Types : Matin, Soir, Voyage, Pré-départ, Post-arrivée
+- Widgets Notion pour cocher sur mobile
+
+---
+
+### 4. Weekly Digest (remplace la gamification par points)
+**Besoin** : garder une vision sur ses patterns de productivité dans le temps.
+
+**Fonctionnement** :
+- Une fois par semaine, l'IA analyse les tâches `Statut = Terminé` de la semaine
+- Génère un résumé en langage naturel avec des patterns réels : "tu travailles 3× plus de tâches le matin", "les tâches en Thaïlande restent en suspens plus longtemps que celles en France"
+- Pas de points, pas de badges — juste de l'introspection utile
+- Stocké dans une base Notion "Weekly Digest"
+
+---
+
+### 5. Nettoyage zombie
+**Besoin** : éviter l'accumulation de tâches obsolètes qui démoralisent.
+
+**Fonctionnement** :
+- Une fois par semaine, l'IA remonte les tâches `Statut = Pas commencé` depuis > 21 jours
+- Pour chaque tâche : Garder / Archiver / Décomposer en sous-tâches ?
+- Franck valide en 5-10 minutes
+
+---
+
+### 6. Délégation manuelle ("À déléguer à l'IA")
+**Besoin** : confier une tâche à une IA sans la faire soi-même.
+
+**Fonctionnement** :
+- Franck bascule manuellement le statut "À déléguer à l'IA" et interpelle l'IA de son choix
+- L'IA exécute (email, analyse, rapport), met à jour Notion (lien livrable)
+- Franck valide le livrable
+
+**Scope actuel** : délégation entièrement manuelle. Pas de détection autonome, pas de polling. L'autonomisation est hors scope pour l'instant.
 
 ---
 
@@ -82,7 +143,7 @@ Mistral détecte les tâches avec `Statut = À déléguer à l'IA`, les exécute
 | Fichier | Contenu |
 |---|---|
 | `docs/architecture.md` | Diagrammes techniques détaillés, flux de données, sécurité |
-| `docs/notion_structure.md` | Structure complète des bases Notion (Master Board, Routines, Journal de Bord) |
-| `docs/api_guide.md` | Exemples de code pour Notion API, Google Calendar API, Mistral API |
+| `docs/notion_structure.md` | Structure complète des bases Notion |
+| `docs/api_guide.md` | Exemples de code API (Notion, Google, Mistral) |
 | `brainstorming/decisions.md` | Toutes les décisions validées / en discussion / rejetées |
 | `brainstorming/idees.md` | Idées et questions ouvertes pour le brainstorming |
