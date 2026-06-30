@@ -221,3 +221,42 @@ Tous les scripts existants étaient du markdown déguisé en Python — réécri
 - Configurer une vue "Par projet" dans le Master Board (filtre Catégorie=Travail groupé par Projet)
 - Tester les scripts Python avec NOTION_TOKEN réel (`.env` à configurer en local)
 - Vérifier que l'intégration Notion a accès à la base Projets (partager la base avec l'intégration)
+
+---
+
+## 2026-06-30 — Claude (Claude Code — standardisation + tâches réelles Siam Paragon / PTT LNG)
+
+### Contexte
+Tâches reçues de deux agents distincts avec des formats de priorité hétérogènes (HAUTE/MOYENNE vs 🔴/🟡/⚠️). Standardisation effectuée avant saisie Notion.
+
+### Actions effectuées
+
+**Notion (via MCP)**
+
+*11 tâches créées dans le Master Board, toutes liées à leur projet via relation Projet :*
+
+*Siam Paragon (5 tâches)* — toutes Catégorie=Travail, Statut=Pas commencé :
+- Mettre à jour le server et le driver — 2h, PC Portable, Thaïlande, 🔴 Urgent, deadline 02/07/2026
+- Switch Synology et vidéo sur ACK (pas sur alarm) — 1h30, PC Portable, Thaïlande, 🔴 Urgent, deadline 05/07/2026
+- Revoir avec Kai pour améliorer la reconnaissance faciale (infos en Sparameter) — 1h, PC Portable, Thaïlande, 🔴 Urgent, deadline 09/07/2026
+- Résoudre le problème avec les compteurs d'alarme — 2h, PC Portable, Thaïlande, 🔴 Urgent, deadline 11/07/2026
+- Envoyer sur le vidéo wall uniquement les alarmes priorité A — 1h, PC Portable, Thaïlande, 🟠 Important, deadline 12/07/2026
+
+*PTT LNG (6 tâches)* — toutes Catégorie=Travail, Statut=Pas commencé (deadlines originales juin/juillet 2026 repoussées de +2 mois) :
+- Tests Drones DJI — validation précision GPS avec AGH — Demi-journée, PC Portable, Thaïlande, 🔴 Urgent, deadline 30/09/2026
+- Finaliser tests Driver NMEA — 2h, PC Portable, Thaïlande, 🟡 Secondaire, deadline 31/08/2026
+- Lancer développement Driver HGH — Demi-journée, PC Portable, Thaïlande, 🟡 Secondaire, deadline 31/08/2026
+- Tests Laser + Système audio — Demi-journée, PC Portable, Thaïlande, 🟡 Secondaire, deadline 30/09/2026
+- Synchroniser avec T-Solution et Prism — 30 min, Téléphone, Global, 🟡 Secondaire, pas de deadline (récurrent)
+- Valider budget intégration Drones DJI (PTT) — 1h, PC Portable, Thaïlande, 🟠 Important, deadline 15/08/2026
+
+*Siam Paragon — projet mis à jour :*
+- Notes projet mise à jour : "Phase : Stabilisation — Phase 1 livrée, Phase 2 en préparation (+500 caméras)"
+
+**Git**
+- Création de `docs/STANDARDS.md` — table de correspondance des priorités, nommage, champs obligatoires, règles pour agents multi-IA
+
+### Décisions prises
+- Labels externes (HAUTE/MOYENNE/⚠️/🔴) toujours traduits en valeurs Notion canoniques avant saisie (cf. STANDARDS.md §1)
+- Phases projet (Stabilisation, Phase 1…) dans le champ Notes, pas dans le statut
+- STANDARDS.md = référence unique pour tous les agents futurs
