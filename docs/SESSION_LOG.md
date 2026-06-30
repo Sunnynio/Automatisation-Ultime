@@ -85,3 +85,12 @@ Format d'une entrée :
 ### En attente de validation
 - Propriétés Catégorie, Échéance, Notes (créées par Claude web) — toujours à valider
 - Supprimer ou archiver les propriétés Points / Temps Réel du schéma Master Board (gamification supprimée)
+
+---
+
+## 2026-06-30 — Franck + Claude (ajustement scope digest)
+
+### Décisions prises
+- **Weekly Digest → Daily Digest** : la fréquence de départ est quotidienne, ajustable dans le temps selon l'usage réel
+- Le digest est déclenché manuellement via IA (pas de cron/automatisme au départ) — flexibilité maximale
+- Stocké dans une base Notion "Daily Digest"

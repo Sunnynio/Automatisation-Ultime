@@ -105,14 +105,17 @@ Tester les filtres et vues sauvegardés dans Notion avant d'écrire tout script 
 
 ---
 
-### 4. Weekly Digest (remplace la gamification par points)
-**Besoin** : garder une vision sur ses patterns de productivité dans le temps.
+### 4. Daily Digest (remplace la gamification par points)
+**Besoin** : garder une vision sur ce qui a été fait chaque jour, ajustable dans le temps.
 
 **Fonctionnement** :
-- Une fois par semaine, l'IA analyse les tâches `Statut = Terminé` de la semaine
-- Génère un résumé en langage naturel avec des patterns réels : "tu travailles 3× plus de tâches le matin", "les tâches en Thaïlande restent en suspens plus longtemps que celles en France"
-- Pas de points, pas de badges — juste de l'introspection utile
-- Stocké dans une base Notion "Weekly Digest"
+- En fin de journée (ou à la demande), l'IA analyse les tâches `Statut = Terminé` du jour
+- Génère un résumé court en langage naturel : ce qui a été fait, ce qui reste, patterns émergents
+- Piloté manuellement via IA (Franck demande le digest quand il le souhaite — pas de déclencheur automatique au départ)
+- Stocké dans une base Notion "Daily Digest"
+- **Flexible** : la fréquence (quotidien → hebdo → autre) s'adapte à l'usage réel
+
+> Point de départ : quotidien. On adapte selon ce qui colle vraiment.
 
 ---
 
