@@ -1,0 +1,386 @@
+# Template pour le Master Board Notion
+
+> **Fichier** : `notion/templates/master_board.json`  
+> **Rôle** : Template JSON pour créer le **Master Board** dans Notion.  
+> **Format** : JSON (compatible avec l'import Notion).
+> **Note** : Ce fichier est un **exemple** à adapter selon vos besoins.
+
+---
+
+## 📌 **Comment Utiliser ce Template**
+
+### **1. Créer une Nouvelle Base Notion**
+1. Allez sur [Notion](https://www.notion.so/) et créez une nouvelle **base de données** (Database).
+2. Choisissez **"Tableau"** ou **"Liste"** comme type de base.
+3. Cliquez sur **"•••" → "Exporter"** pour voir la structure actuelle (optionnel).
+
+### **2. Importer le Template**
+1. **Méthode 1 : Import JSON** (recommandé) :
+   - Utilisez l’[API Notion](https://developers.notion.com/docs) pour créer une base à partir de ce JSON.
+   - Exemple de code Python :
+     ```python
+     from notion_client import Client
+     import json
+     
+     notion = Client(auth="VOTRE_TOKEN_NOTION")
+     
+     with open("notion/templates/master_board.json", "r", encoding="utf-8") as f:
+         template = json.load(f)
+     
+     # Créer une nouvelle base (nécessite un parent, ex: une page Notion)
+     parent_page_id = "ID_DE_LA_PAGE_PARENTE"
+     notion.databases.create(
+         parent={"type": "page_id", "page_id": parent_page_id},
+         **template
+     )
+     ```
+
+2. **Méthode 2 : Copier-Coller Manuel** :
+   - Copiez la structure des **propriétés** ci-dessous et créez-les manuellement dans Notion.
+
+### **3. Adapter le Template**
+- Modifiez les **valeurs possibles** pour chaque propriété (ex: ajoutez/supprimez des pays ou des priorités).
+- Ajoutez/supprimez des **propriétés** selon vos besoins.
+
+---
+
+## 📄 **Template JSON**
+
+```json
+{
+  "parent": {
+    "type": "page_id",
+    "page_id": "REMPLACER_PAR_L_ID_DE_LA_PAGE_PARENTE"
+  },
+  "icon": {
+    "type": "emoji",
+    "emoji": "🎯"
+  },
+  "cover": {
+    "type": "external",
+    "external": {
+      "url": "https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
+    }
+  },
+  "title": [
+    {
+      "type": "text",
+      "text": {
+        "content": "Master Board - Système de Productivité"
+      }
+    }
+  ],
+  "description": [
+    {
+      "type": "text",
+      "text": {
+        "content": "Base de données centrale pour toutes les tâches. Utilisée pour le filtrage contextuel par les IA."
+      }
+    }
+  ],
+  "properties": {
+    "Nom": {
+      "title": {}
+    },
+    "⏱️ Durée": {
+      "select": {
+        "options": [
+          {"name": "10 min", "color": "gray"},
+          {"name": "30 min", "color": "gray"},
+          {"name": "1h", "color": "blue"},
+          {"name": "1h30", "color": "blue"},
+          {"name": "2h", "color": "green"},
+          {"name": "Demi-journée", "color": "yellow"},
+          {"name": "1 jour", "color": "orange"},
+          {"name": "2 jours", "color": "red"},
+          {"name": "2 jours +", "color": "red"}
+        ]
+      }
+    },
+    "💻 Support": {
+      "multi_select": {
+        "options": [
+          {"name": "PC Portable", "color": "blue"},
+          {"name": "PC Fixe", "color": "green"},
+          {"name": "Téléphone", "color": "orange"},
+          {"name": "Tablette", "color": "yellow"},
+          {"name": "Global", "color": "gray"}
+        ]
+      }
+    },
+    "🌍 Pays/Lieu": {
+      "select": {
+        "options": [
+          {"name": "Global", "color": "gray"},
+          {"name": "Thaïlande", "color": "orange"},
+          {"name": "France", "color": "blue"},
+          {"name": "Saudi Arabia", "color": "green"},
+          {"name": "Avion", "color": "purple"},
+          {"name": "Hôtel", "color": "yellow"},
+          {"name": "Bureau", "color": "red"}
+        ]
+      }
+    },
+    "⚙️ Statut": {
+      "status": {
+        "options": [
+          {"name": "Pas commencé", "color": "gray"},
+          {"name": "En cours", "color": "blue"},
+          {"name": "En pause", "color": "yellow"},
+          {"name": "À déléguer à l’IA", "color": "purple"},
+          {"name": "En attente de validation", "color": "orange"},
+          {"name": "Terminé", "color": "green"}
+        ],
+        "default": {"name": "Pas commencé"}
+      }
+    },
+    "🎯 Priorité": {
+      "select": {
+        "options": [
+          {"name": "Urgent", "color": "red"},
+          {"name": "Important", "color": "orange"},
+          {"name": "Secondaire", "color": "yellow"},
+          {"name": "Optionnel", "color": "gray"},
+          {"name": "Sans priorité", "color": "default"}
+        ]
+      }
+    },
+    "🔄 Récurrence": {
+      "select": {
+        "options": [
+          {"name": "Unique", "color": "gray"},
+          {"name": "Quotidienne", "color": "blue"},
+          {"name": "Hebdomadaire", "color": "green"},
+          {"name": "Mensuelle", "color": "yellow"},
+          {"name": "Trimestrielle", "color": "orange"},
+          {"name": "Voyage", "color": "purple"},
+          {"name": "Pré-départ", "color": "pink"},
+          {"name": "Post-arrivée", "color": "brown"}
+        ]
+      }
+    },
+    "📌 Contexte": {
+      "rich_text": {}
+    },
+    "🕒 Heure de la journée": {
+      "select": {
+        "options": [
+          {"name": "Matin", "color": "yellow"},
+          {"name": "Après-midi", "color": "orange"},
+          {"name": "Soir", "color": "blue"},
+          {"name": "Nuit", "color": "purple"},
+          {"name": "Indifférent", "color": "gray"}
+        ]
+      }
+    },
+    "🔗 Dépendances": {
+      "relation": {
+        "default": {}
+      }
+    },
+    "📅 Date Limite": {
+      "date": {}
+    },
+    "📅 Date de Début": {
+      "date": {}
+    },
+    "📝 Notes": {
+      "rich_text": {}
+    },
+    "🤖 Délégable à l’IA": {
+      "checkbox": {
+        "default": false
+      }
+    },
+    "📄 Livrable": {
+      "url": {}
+    },
+    "🔄 Statut IA": {
+      "select": {
+        "options": [
+          {"name": "Non délégée", "color": "gray"},
+          {"name": "En attente", "color": "yellow"},
+          {"name": "En cours", "color": "blue"},
+          {"name": "Terminée", "color": "green"},
+          {"name": "Échec", "color": "red"}
+        ]
+      }
+    },
+    "📅 Date de Délégation": {
+      "date": {}
+    },
+    "✅ Date de Complétion": {
+      "date": {}
+    },
+    "⏱️ Temps Réel": {
+      "number": {
+        "format": "number"
+      }
+    },
+    "🌟 Points": {
+      "number": {
+        "format": "number"
+      }
+    },
+    "🏷️ Tags": {
+      "multi_select": {
+        "options": [
+          {"name": "Urgent", "color": "red"},
+          {"name": "Automatisable", "color": "blue"},
+          {"name": "Voyage", "color": "green"},
+          {"name": "Récurrent", "color": "yellow"},
+          {"name": "Client", "color": "purple"},
+          {"name": "Admin", "color": "orange"}
+        ]
+      }
+    },
+    "👤 Assigné à": {
+      "people": {}
+    }
+  },
+  "views": [
+    {
+      "name": "Tableau",
+      "type": "table",
+      "properties": [
+        {"property": "Nom", "width": 200},
+        {"property": "⏱️ Durée", "width": 100},
+        {"property": "💻 Support", "width": 150},
+        {"property": "🌍 Pays/Lieu", "width": 120},
+        {"property": "⚙️ Statut", "width": 150},
+        {"property": "🎯 Priorité", "width": 120},
+        {"property": "📅 Date Limite", "width": 120}
+      ]
+    },
+    {
+      "name": "Kanban",
+      "type": "board",
+      "properties": [
+        {"property": "⚙️ Statut"}
+      ],
+      "group_by": {"property": "⚙️ Statut"}
+    },
+    {
+      "name": "Calendrier",
+      "type": "calendar",
+      "properties": [
+        {"property": "📅 Date Limite"},
+        {"property": "Nom"}
+      ]
+    },
+    {
+      "name": "À Déléguer à l’IA",
+      "type": "table",
+      "filter": {
+        "property": "⚙️ Statut",
+        "status": {
+          "equals": "À déléguer à l’IA"
+        }
+      },
+      "properties": [
+        {"property": "Nom", "width": 200},
+        {"property": "📌 Contexte", "width": 150},
+        {"property": "🤖 Statut IA", "width": 150},
+        {"property": "📅 Date de Délégation", "width": 150},
+        {"property": "📄 Livrable", "width": 200}
+      ]
+    },
+    {
+      "name": "Filtre Contextuel",
+      "type": "table",
+      "filter": {
+        "and": [
+          {
+            "property": "⚙️ Statut",
+            "status": {
+              "is_not": "Terminé"
+            }
+          }
+        ]
+      },
+      "properties": [
+        {"property": "Nom", "width": 200},
+        {"property": "⏱️ Durée", "width": 100},
+        {"property": "💻 Support", "width": 150},
+        {"property": "🌍 Pays/Lieu", "width": 120},
+        {"property": "🎯 Priorité", "width": 120},
+        {"property": "📌 Contexte", "width": 150}
+      ]
+    }
+  ]
+}
+```
+
+---
+
+## 📝 **Explications des Propriétés**
+
+### **Propriétés Obligatoires**
+| Propriété | Type | Description | Valeurs Possibles |
+|-----------|------|-------------|------------------|
+| **Nom** | Titre | Nom de la tâche. | Libre |
+| **⏱️ Durée** | Sélection | Temps estimé pour la tâche. | 10 min, 30 min, 1h, 1h30, 2h, Demi-journée, 1 jour, 2 jours, 2 jours + |
+| **💻 Support** | Sélection Multiple | Supports compatibles pour la tâche. | PC Portable, PC Fixe, Téléphone, Tablette, Global |
+| **🌍 Pays/Lieu** | Sélection | Localisation requise ou actuelle. | Global, Thaïlande, France, Saudi Arabia, Avion, Hôtel, Bureau |
+| **⚙️ Statut** | Statut (Kanban) | État actuel de la tâche. | Pas commencé, En cours, En pause, À déléguer à l’IA, En attente de validation, Terminé |
+| **🎯 Priorité** | Sélection | Niveau de priorité. | Urgent, Important, Secondaire, Optionnel, Sans priorité |
+| **🔄 Récurrence** | Sélection | Fréquence de la tâche. | Unique, Quotidienne, Hebdomadaire, Mensuelle, Trimestrielle, Voyage, Pré-départ, Post-arrivée |
+
+### **Propriétés Recommandées**
+| Propriété | Type | Description | Valeurs Possibles |
+|-----------|------|-------------|------------------|
+| **📌 Contexte** | Texte | Mots-clés pour un filtrage contextuel. | Libre (ex: "Admin", "Client X") |
+| **🕒 Heure de la journée** | Sélection | Moment idéal pour la tâche. | Matin, Après-midi, Soir, Nuit, Indifférent |
+| **🔗 Dépendances** | Relation | Lien vers d’autres tâches Notion. | Tâches Notion |
+| **📅 Date Limite** | Date | Échéance de la tâche. | JJ/MM/AAAA |
+| **📅 Date de Début** | Date | Date à partir de laquelle la tâche peut être réalisée. | JJ/MM/AAAA |
+| **📝 Notes** | Texte | Détails supplémentaires. | Libre |
+
+### **Propriétés pour l’Automatisation (Mistral)**
+| Propriété | Type | Description | Valeurs Possibles |
+|-----------|------|-------------|------------------|
+| **🤖 Délégable à l’IA** | Case à cocher | Indique si la tâche peut être délégable à l’IA. | Oui/Non |
+| **📄 Livrable** | URL | Lien vers le livrable généré par l’IA. | URL |
+| **🔄 Statut IA** | Sélection | État de la délégation à l’IA. | Non délégée, En attente, En cours, Terminée, Échec |
+| **📅 Date de Délégation** | Date | Date à laquelle la tâche a été délégée. | JJ/MM/AAAA |
+
+### **Propriétés pour la Gamification**
+| Propriété | Type | Description | Valeurs Possibles |
+|-----------|------|-------------|------------------|
+| **✅ Date de Complétion** | Date | Date à laquelle la tâche a été marquée comme terminée. | JJ/MM/AAAA |
+| **⏱️ Temps Réel** | Nombre | Temps réel passé sur la tâche (en minutes). | Nombre entier |
+| **🌟 Points** | Nombre | Points attribués pour la tâche. | Nombre entier |
+
+### **Propriétés Optionnelles**
+| Propriété | Type | Description | Valeurs Possibles |
+|-----------|------|-------------|------------------|
+| **🏷️ Tags** | Sélection Multiple | Tags pour un filtrage avancé. | #Urgent, #Automatisable, #Voyage, #Récurrent, #Client, #Admin |
+| **👤 Assigné à** | Personne | Personne responsable de la tâche. | Utilisateurs Notion |
+
+---
+
+## 🎯 **Vues Prédéfini**
+
+Le template inclut **5 vues** pour visualiser les tâches :
+
+1. **Tableau** : Vue par défaut avec les colonnes principales.
+2. **Kanban** : Vue par statut (pour suivre l’avancement).
+3. **Calendrier** : Vue par date limite (pour la planification).
+4. **À Déléguer à l’IA** : Vue filtrée pour les tâches à déléguer.
+5. **Filtre Contextuel** : Vue pour le filtrage par contexte (ex: pays, support, durée).
+
+---
+
+## 🚀 **Prochaines Étapes**
+
+1. **Adapter le template** : Modifiez les options des propriétés (ex: ajoutez des pays ou des priorités).
+2. **Importer dans Notion** : Utilisez l’API ou copiez-collez manuellement.
+3. **Ajouter des tâches d’exemple** : Testez le filtrage avec des données réelles.
+4. **Configurer les relations** : Liez les propriétés de type **Relation** (ex: `🔗 Dépendances`) à d’autres bases.
+
+---
+
+## 📚 **Ressources**
+- [Notion API Create Database Documentation](https://developers.notion.com/reference/create-a-database)
+- [Notion Database Property Types](https://developers.notion.com/docs/working-with-databases#property-types)
+- [Notion Templates Gallery](https://www.notion.so/templates) (pour inspiration)
