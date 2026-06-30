@@ -1,0 +1,38 @@
+# Placeholder pour le dossier Notion
+
+> **Fichier** : `notion/.gitkeep`  
+> **Rôle** : Permettre à Git de suivre ce dossier vide.  
+> **Note** : Ce fichier peut être supprimé une fois que des fichiers réels seront ajoutés au dossier.
+
+---
+
+## 📝 **Contenu Futur du Dossier `/notion`**
+
+Ce dossier est destiné à contenir :
+- **Templates Notion** : Exports JSON/CSV des bases de données (Master Board, Routines, Journal de Bord).
+- **Documentation Notion** : Guides pour importer/configurer les bases.
+- **Exemples de Données** : Fichiers JSON avec des tâches d'exemple.
+
+---
+
+## 📌 **Structure Prévue**
+
+```
+notion/
+├── templates/
+│   ├── master_board.json          # Template pour le Master Board
+│   ├── routines.json              # Template pour les Routines
+│   └── journal_de_bord.json       # Template pour le Journal de Bord
+├── examples/
+│   ├── sample_tasks.json          # Exemple de tâches pour le Master Board
+│   └── sample_routines.json       # Exemple de routines
+└── README.md                      # Guide pour utiliser les templates
+```
+
+---
+
+## 🚀 **Prochaines Étapes**
+1. Exporter le **Master Board** depuis Notion au format JSON.
+2. Ajouter le fichier dans `notion/templates/master_board.json`.
+3. Répéter pour les bases **Routines** et **Journal de Bord**.
+4. Documenter le processus d'import dans `notion/README.md`.
