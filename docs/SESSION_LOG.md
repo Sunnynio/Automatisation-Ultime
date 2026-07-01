@@ -259,7 +259,7 @@ Tous les scripts existants étaient du markdown déguisé en Python — réécri
 - `ADD COLUMN "💡 Importance"` SELECT : 🔴 Critique (red) / 🟠 Important (orange) / 🟡 Secondaire (yellow) / ⚪ Optionnel (default)
 - `ADD COLUMN "🔋 Énergie"` SELECT : Faible (green) / Moyenne (yellow) / Élevée (red)
 
-**Scripts Python (5 fichiers mis à jour sur branche `claude/automatisation-ultime-docs-m3tv2e`)**
+**Scripts Python (5 fichiers mis à jour)**
 - `scripts/utils/helpers.py` — URGENCE_ORDER + IMPORTANCE_ORDER, sort_by_priority() refactorisé
 - `scripts/notion_api/fetch_tasks.py` — arg `--energie`, tri Urgence>Importance>Durée>Échéance, affichage mis à jour
 - `scripts/automation/context_filter.py` — arg `--energie`, question interactive énergie, affichage mis à jour
@@ -267,13 +267,23 @@ Tous les scripts existants étaient du markdown déguisé en Python — réécri
 - `scripts/automation/zombie_cleanup.py` — Urgence+Importance au lieu de Priorité
 
 **Documentation**
-- `docs/ARCHITECTURE.md` — schéma Master Board mis à jour (Priorité → Urgence+Importance+Énergie)
-- `docs/SESSION_LOG.md` — cette entrée
+- `docs/ARCHITECTURE.md` — schéma Master Board mis à jour
+- `docs/SESSION_LOG.md` — entrée ajoutée
 
-### En attente (actions Franck uniquement)
-1. **Notion UI** : créer la vue "Par projet" dans le Master Board (filtre Catégorie=Travail, groupé par Projet)
-2. **Mobile/PC** : installer les widgets Routines (☀️ Routine du Matin + ✈️ Avant Aéroport)
-3. **Make.com** : créer le scénario reset Routine du Matin (décider l'heure — suggestion 3h00)
-4. **Make.com** : créer le scénario reset Avant Aéroport (24h après dernier check)
-5. **Local** : copier `.env.example` → `.env`, remplir NOTION_TOKEN + NOTION_DATABASE_ID, tester les scripts
-6. **Décision** : comment Gemini/Mistral accèdent au repo (Q5 ouverte dans OPEN_QUESTIONS.md)
+---
+
+## 2026-07-01 — Claude (Claude Code — création prompt agent dispatch)
+
+### Actions effectuées
+- Création de `prompts/DISPATCH_AGENT.md` — system prompt complet pour l'agent dispatch de Franck
+- Mise à jour de `CLAUDE.md` : ajout de la table des agents IA du projet
+- Mise à jour de `docs/SESSION_LOG.md` : cette entrée
+
+### Décisions prises
+- L'agent dispatch est reconnu comme agent IA officiel du projet au même titre que Claude Code
+- Son prompt d'initialisation est versionné dans le repo (évolue avec le projet)
+- Il a les mêmes obligations de contribution (SESSION_LOG, STANDARDS) que les autres agents
+
+### En attente de validation
+- Franck colle `prompts/DISPATCH_AGENT.md` dans son agent et valide que le comportement correspond
+- Ajuster le prompt selon retours d'usage réel

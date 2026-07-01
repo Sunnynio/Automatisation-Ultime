@@ -27,6 +27,16 @@
 
 ---
 
+## Agents IA du projet
+
+| Agent | Rôle | Prompt d'init |
+|---|---|---|
+| **Agent Dispatch** | Interface quotidienne de Franck — réunions, tâches, Session Planning, Digest | `prompts/DISPATCH_AGENT.md` |
+| **Claude Code** | Dev, scripts Python, modifications git, DDL Notion | Ce fichier (CLAUDE.md) |
+| **Gemini / Mistral** | Analyse longue, traitement de docs, redélégation | Pas encore intégré (Q5 ouverte) |
+
+---
+
 ## Règle de contribution (obligatoire)
 
 Toute session qui prend une décision structurante ou modifie l'état réel du système → **ajouter une entrée dans `docs/SESSION_LOG.md`** avec : date, IA impliquée, interface utilisée, actions réelles, décisions prises, ce qui reste en attente de validation.
