@@ -432,3 +432,34 @@ Le schéma Notion est désormais **100% aligné** avec `docs/STANDARDS.md` et le
 5. **Agent dispatch** : coller `prompts/DISPATCH_AGENT.md` comme system prompt et valider
 6. **Décision** : `Priorité projet` dans base Projets — garder ou splitter ?
 7. **Décision** : workflow Gemini/Mistral (Option A/B/C dans `docs/TODO_FRANCK.md`)
+
+---
+
+## 2026-07-01 — Claude (Claude Code — sync Google Maps auto + analyse orchestration)
+
+### Actions effectuées
+
+**Script `scripts/automation/sync_spots_to_gmaps.py` créé** (Playwright) :
+- Automatise l'ajout des spots Notion dans les listes personnelles Google Maps Saved Places
+- Flags : `--setup` (export session cookies), `--dry-run`, `--visible` (debug), `--all` (re-sync tout)
+- Mapping Statut → liste Google Maps :
+  - `À visiter` → "Vouloir y aller"
+  - `Favori` → "Favoris"
+  - `Visité` → "Lieux visités"
+- Persistance session Google : cookies dans `.gmaps_session.json` (hors git)
+- Cache dédup : `.gmaps_synced.json` + détection URL `/maps/place/` vs `/maps/search/`
+- Après sauvegarde dans Maps : capture l'URL réelle de la fiche et met à jour Notion
+- Chromium système utilisé (`/opt/pw-browsers/chromium`) — pas de téléchargement
+
+**`requirements.txt` mis à jour** : ajout `playwright>=1.40.0`
+
+**Analyse Make.com vs n8n** — livraison en session (décision en attente de Franck) :
+- Make.com gratuit suffit pour les 2 resets de routines (~105 ops/mois sur 1 000 incluses)
+- Make.com Core (~9€) : surcoût injustifié pour le besoin actuel
+- **n8n self-hosted (~3-5€/mois) = recommandé long terme** : seul capable de déclencher des scripts Python via "Execute Command" — indispensable pour la sync Spots→Maps automatique (Notion webhook → n8n → Playwright)
+- Recommandation court terme : Make.com gratuit pour les routines maintenant, migrer vers n8n self-hosted quand la sync Google Maps auto sera mise en production
+
+### Décisions en attente de Franck
+- **Orchestration** : valider Make.com gratuit pour les routines (ou aller directement sur n8n)
+- **Google Maps sync** : tester `--setup` depuis sa machine locale (nécessite une session Google active dans le navigateur)
+- **Playwright** : lancer `pip install playwright` sur sa machine (Chromium déjà présent dans l'env cloud)
