@@ -401,9 +401,31 @@ Le schéma Notion est désormais **100% aligné** avec `docs/STANDARDS.md` et le
 
 ### En attente Franck
 - Ajouter les spots restants au fur et à mesure (weed shops, coffee shops, hôtels)
-- Remplir les URLs Google Maps manuellement ou via intégration future
-- Décider si intégration Google Maps = priorité (sinon, le champ attend)
 - Vérifier les statuts des spots Vietnam (marqués "À visiter" par défaut — les passer en Visité si déjà faits)
+- Importer `spots.kml` dans Google My Maps pour avoir la carte interactive
+
+---
+
+## 2026-07-01 — Claude (Claude Code — mise à jour DISPATCH_AGENT.md v2)
+
+### Actions effectuées
+
+**`prompts/DISPATCH_AGENT.md` mis à jour (v2)** :
+- Ajout de la base **Spots** dans la table des bases Notion (URL + rôle)
+- Ajout du script `sync_spots_to_kml.py` dans la liste des scripts disponibles
+- Ajout de la **responsabilité #8 : Gestion des Spots** :
+  - Workflow complet : création spot → champs à remplir → génération URL Google Maps → résumé 1 ligne
+  - Workflow côté Franck pour sauvegarder dans Google Maps Saved Places (1 clic, pas d'API)
+  - Règle de mise à jour carte My Maps (relancer le script KML, pas à chaque spot)
+  - Règles de saisie rapide (statut par défaut, cas "j'y suis allé", cas "c'est top")
+- Ajout dans "Ce que tu NE fais PAS" : pas d'ajout automatique dans Saved Places Google Maps
+- Ajout dans "Décisions figées" : Spots ≠ Master Board, Google Maps = URL de recherche + action manuelle
+- Branche de travail corrigée : `claude/project-init-setup-2xtunh`
+
+### Décisions prises
+- Le prompt de l'agent dispatch est **incrémental** : seule la section de mise à jour est ajoutée, le reste reste inchangé (évite de tout réexpliquer à chaque session)
+- L'agent génère les URLs Google Maps search (`/maps/search/?api=1&query=…`) automatiquement à la création de chaque spot — Franck clique pour sauvegarder manuellement
+- La régénération du KML se fait à la demande (pas systématique à chaque ajout de spot)
 2. **Mobile/PC** : installer les widgets Routines (☀️ Matin + ✈️ Aéroport)
 3. **Make.com** : scénario reset Routine du Matin
 4. **Make.com** : scénario reset Avant Aéroport (moins urgent — peut rester manuel)
