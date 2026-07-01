@@ -52,7 +52,7 @@ DURATION_MINUTES = {
     "1h30": 90,
     "2h": 120,
     "Demi-journée": 240,
-    "1 jour+": 480,
+    "1 jour +": 480,
 }
 
 ENERGIE_LEVELS = ["Faible", "Moyenne", "Élevée"]

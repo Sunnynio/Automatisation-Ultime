@@ -41,11 +41,13 @@ Question restante (future) :
 
 ---
 
-## Q5 — Accès et mise à jour du repo par les différentes IA
+## Q5 — Accès et mise à jour du repo par les différentes IA — PARTIELLEMENT RÉSOLUE
 
-Plusieurs IA (Claude, Gemini, Mistral) doivent pouvoir contribuer au repo sans relire tout l'historique.
+**Décision partielle (01/07/2026)** :
+- L'**agent dispatch** a maintenant un prompt versionné dans le repo (`prompts/DISPATCH_AGENT.md`). Il est reconnu comme agent officiel du projet avec les mêmes obligations de contribution (SESSION_LOG, STANDARDS) que Claude Code.
+- **Claude Code** accède directement au repo via GitHub MCP.
 
-Questions ouvertes :
-- Claude Code a accès au repo via GitHub. Gemini et Mistral ont-ils un accès équivalent ?
-- Si non, quel est le workflow : Franck copie-colle les sorties des autres IA dans les fichiers, puis Claude Code commite ?
-- Comment éviter les conflits si deux IA travaillent sur le même fichier lors de sessions parallèles ?
+**Questions encore ouvertes** :
+- **Gemini / Mistral** : pas d'accès direct au repo. Quel est le workflow ? Via l'agent dispatch qui relaie les décisions ? Franck copie-colle le contexte pertinent ?
+- Comment éviter les conflits si plusieurs agents travaillent sur le même fichier lors de sessions parallèles ?
+- Quand Gemini ou Mistral prennent une décision structurante, qui met à jour le SESSION_LOG — Franck, l'agent dispatch, ou Claude Code après coup ?

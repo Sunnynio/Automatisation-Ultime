@@ -287,3 +287,38 @@ Tous les scripts existants étaient du markdown déguisé en Python — réécri
 ### En attente de validation
 - Franck colle `prompts/DISPATCH_AGENT.md` dans son agent et valide que le comportement correspond
 - Ajuster le prompt selon retours d'usage réel
+
+---
+
+## 2026-07-01 — Claude (Claude Code — vérification cohérence générale + clôture session)
+
+### Actions effectuées
+
+**Vérification inter-fichiers complète** : CLAUDE.md, PROJECT_BRIEF.md, ARCHITECTURE.md, STANDARDS.md, OPEN_QUESTIONS.md, SESSION_LOG.md, DISPATCH_AGENT.md, 5 scripts Python
+
+**Bug corrigé** :
+- `"1 jour+"` → `"1 jour +"` dans `DURATION_MINUTES` de 4 scripts (helpers.py, fetch_tasks.py, context_filter.py, daily_digest.py). La valeur Notion est `"1 jour +"` (avec espace) — sans la correction, le filtre durée et le tri ignoraient silencieusement les tâches longue durée.
+
+**Documentation corrigée** :
+- `docs/PROJECT_BRIEF.md` : table "Documents liés" mise à jour (fichiers créés marqués ✓, fichiers non encore créés marqués "À créer si besoin") + note sur `Priorité projet` dans base Projets
+- `docs/OPEN_QUESTIONS.md` : Q5 mise à jour (partiellement résolue — agent dispatch intégré, questions Gemini/Mistral et SESSION_LOG restantes)
+
+### Points de cohérence vérifiés ✓
+- Schéma Master Board identique dans tous les fichiers : Priorité supprimée, 🚨 Urgence + 💡 Importance + 🔋 Énergie présents partout
+- 7 workflows cohérents entre PROJECT_BRIEF.md et DISPATCH_AGENT.md
+- Décisions figées identiques dans CLAUDE.md, PROJECT_BRIEF.md et DISPATCH_AGENT.md
+- Ordre de tri (Urgence > Importance > Durée > Échéance) cohérent dans les scripts et la documentation
+- Valeurs canoniques STANDARDS.md alignées avec les dicts Python (URGENCE_ORDER, IMPORTANCE_ORDER, DURATION_MINUTES)
+
+### Point à décider (non bloquant)
+- `Priorité projet` dans la base Projets utilise encore l'ancien format (🔴 Urgent / 🟠 Important / 🟡 Secondaire). Décider si ce champ-projet doit aussi adopter la logique Eisenhower (deux champs séparés) ou rester tel quel pour simplifier la gestion des projets.
+
+### En attente Franck (liste complète, non modifiée)
+1. **Notion UI** : créer la vue "Par projet" dans le Master Board (filtre Catégorie=Travail, groupé par Projet)
+2. **Mobile/PC** : installer les widgets Routines (☀️ Matin + ✈️ Aéroport)
+3. **Make.com** : scénario reset Routine du Matin (+ décider l'heure — suggestion 3h00)
+4. **Make.com** : scénario reset Avant Aéroport (24h après dernier check)
+5. **Local** : `cp .env.example .env` → remplir NOTION_TOKEN + NOTION_DATABASE_ID → tester les scripts
+6. **Agent dispatch** : coller `prompts/DISPATCH_AGENT.md` comme system prompt et valider le comportement
+7. **Décision** : `Priorité projet` dans base Projets — garder ou splitter en Urgence+Importance ?
+8. **Décision** : workflow Gemini/Mistral pour contributions au repo (Q5 ouverte)

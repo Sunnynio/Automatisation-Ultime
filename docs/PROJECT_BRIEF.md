@@ -104,6 +104,8 @@ Propriétés optionnelles (ajouter seulement si le besoin est prouvé) : Récurr
 | **Notes** | Texte | Contexte, historique, liens utiles |
 | **Tâches** | Relation | ← Master Board |
 
+> Note : `Priorité projet` est un champ de niveau projet (pas de tâche) — non affecté par la migration Eisenhower du Master Board. À décider si ce champ doit également être splitté en Urgence+Importance.
+
 ### Pages Notes (hors bases)
 
 Structure libre — pages Notion nommées par thème, pas une base de données :
@@ -217,10 +219,16 @@ Tester les filtres et vues sauvegardés dans Notion avant d'écrire tout script 
 
 ## Documents liés
 
-| Fichier | Contenu |
-|---|---|
-| `docs/architecture.md` | Diagrammes techniques détaillés, flux de données, sécurité |
-| `docs/notion_structure.md` | Structure complète des bases Notion |
-| `docs/api_guide.md` | Exemples de code API (Notion, Google, Mistral) |
-| `brainstorming/decisions.md` | Toutes les décisions validées / en discussion / rejetées |
-| `brainstorming/idees.md` | Idées et questions ouvertes pour le brainstorming |
+| Fichier | Contenu | Statut |
+|---|---|---|
+| `CLAUDE.md` | Init Claude Code : décisions figées, agents, lecture rapide | ✓ |
+| `docs/STANDARDS.md` | Conventions de saisie pour tous les agents | ✓ |
+| `docs/ARCHITECTURE.md` | État technique réel (URLs Notion, statut scripts) | ✓ |
+| `docs/SESSION_LOG.md` | Log chronologique des actions réelles | ✓ |
+| `docs/OPEN_QUESTIONS.md` | Questions non tranchées | ✓ |
+| `prompts/DISPATCH_AGENT.md` | System prompt de l'agent dispatch | ✓ |
+| `docs/architecture.md` | Diagrammes Mermaid, flux de données (design doc original) | ✓ (non modifié) |
+| `docs/notion_structure.md` | Structure détaillée des bases Notion | À créer si besoin |
+| `docs/api_guide.md` | Exemples de code API (Notion, Google, Mistral) | À créer si besoin |
+| `brainstorming/decisions.md` | Décisions validées / rejetées | À créer si besoin |
+| `brainstorming/idees.md` | Idées et questions pour le brainstorming | À créer si besoin |
