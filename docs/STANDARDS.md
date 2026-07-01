@@ -1,7 +1,7 @@
 # STANDARDS — Conventions de saisie multi-agents
 
 > Ce document est la référence unique pour tout agent (Claude, Gemini, Mistral, humain) qui crée ou modifie des données dans ce système.
-> Dernière mise à jour : 2026-06-30
+> Dernière mise à jour : 2026-07-01
 
 ---
 
@@ -13,26 +13,63 @@ Les tâches arrivent de sources différentes (agents IA distincts, saisie manuel
 
 ---
 
-## 1. Priorité — table de correspondance canonique
+## 1. Urgence — table de correspondance canonique
+
+Critère : **deadline / temps contraint**. Répond à la question « faut-il le faire maintenant ? »
 
 Valeurs **Notion** (toujours utiliser ces libellés exacts, emoji inclus) :
 
 | Valeur Notion | Signification | Aliases acceptés en entrée |
 |---|---|---|
-| `🔴 Urgent` | Bloquant, deadline proche ou critique | HAUTE, P1, Urgente, 🔴, rouge |
-| `🟠 Important` | À faire cette semaine, impact fort | MOYENNE, P2, ⚠️, orange |
-| `🟡 Secondaire` | À faire ce mois, non bloquant | BASSE, P3, Low, 🟡, jaune |
-| `⚪ Optionnel` | Nice-to-have, aucune deadline | P4, Optionnel |
-
-**Règle de conversion** : quand un agent reçoit un label externe (HAUTE, 🔴, ⚠️…), il le traduit en valeur Notion canonique **avant** la saisie. Ne jamais écrire "HAUTE" ou "P1" dans Notion.
+| `🔴 Urgent` | Deadline proche, bloquant, ou pénalité si non fait aujourd'hui | HAUTE, P1, immédiat, ASAP, critique |
+| `🟡 Normal` | À faire cette semaine, pas de blocage immédiat | MOYENNE, P2, normal |
+| `⚪ Non urgent` | Aucune deadline, peut attendre | BASSE, P3, P4, Low, plus tard |
 
 ---
 
-## 2. Durée — estimation par défaut
+## 2. Importance — table de correspondance canonique
+
+Critère : **impact / valeur ajoutée**. Répond à la question « est-ce que ça a de l'importance si ce n'est pas fait ? »
+
+| Valeur Notion | Signification | Aliases acceptés en entrée |
+|---|---|---|
+| `🔴 Critique` | Impact fort, stratégique, irremplaçable | Critique, Essentiel, Clé |
+| `🟠 Important` | Utile, valeur réelle, à faire | Important, ⚠️, orange |
+| `🟡 Secondaire` | Peu d'impact, confort | Secondaire, BASSE, Low |
+| `⚪ Optionnel` | Nice-to-have, aucune conséquence si non fait | Optionnel, P4 |
+
+**Matrice Eisenhower — guide de décision rapide** :
+
+| | Urgent 🔴 | Normal 🟡 | Non urgent ⚪ |
+|---|---|---|---|
+| **Critique 🔴** | Faire maintenant | Planifier | Planifier long terme |
+| **Important 🟠** | Faire bientôt | Planifier cette semaine | Reporter |
+| **Secondaire 🟡** | Déléguer | Reporter | Éliminer |
+| **Optionnel ⚪** | Déléguer | Éliminer | Éliminer |
+
+**Règle de conversion** : quand un agent reçoit un label externe (HAUTE, P1, ⚠️…), il le traduit en valeurs Notion canoniques (**Urgence** + **Importance** séparément) **avant** la saisie. Ne jamais écrire "HAUTE" ou "P1" dans Notion.
+
+> Note : l'ancien champ `Priorité` (Urgent/Important/Secondaire/Optionnel) est **supprimé** et remplacé par ces deux champs séparés.
+
+---
+
+## 3. Énergie requise
+
+Critère : **niveau de concentration / effort cognitif**. Utilisé pour adapter le Session Planning à l'état du moment.
+
+| Valeur | Signification | Exemples |
+|---|---|---|
+| `Faible` | Tâche mécanique, administrative, peu de concentration | Cocher des cases, passer un appel court, trier des emails |
+| `Moyenne` | Concentration normale, pas de deep work | Rédiger un email, préparer un document simple |
+| `Élevée` | Deep work, créatif ou technique complexe | Développement, analyse, présentation, rédaction longue |
+
+Si non renseigné à la création : laisser vide (ne pas inventer). L'IA peut l'inférer lors du triage différé.
+
+---
+
+## 4. Durée — estimation par défaut
 
 Valeurs **Notion** disponibles : `10 min` / `30 min` / `1h` / `1h30` / `2h` / `Demi-journée` / `1 jour +`
-
-Guide d'estimation :
 
 | Type de tâche | Durée suggérée |
 |---|---|
@@ -45,7 +82,7 @@ Guide d'estimation :
 
 ---
 
-## 3. Support
+## 5. Support
 
 Valeurs **Notion** disponibles (MULTI_SELECT) : `PC Portable` / `PC Fixe` / `Téléphone` / `Tablette` / `Global`
 
@@ -58,7 +95,7 @@ Valeurs **Notion** disponibles (MULTI_SELECT) : `PC Portable` / `PC Fixe` / `Té
 
 ---
 
-## 4. Pays / Lieu
+## 6. Pays / Lieu
 
 Valeurs disponibles (non exhaustif) : `Global` / `Thaïlande` / `France` / `Saudi Arabia` / `Avion` / `Hôtel`
 
@@ -68,7 +105,7 @@ Valeurs disponibles (non exhaustif) : `Global` / `Thaïlande` / `France` / `Saud
 
 ---
 
-## 5. Statut des tâches (Master Board)
+## 7. Statut des tâches (Master Board)
 
 Valeurs canoniques dans l'ordre du workflow :
 
@@ -83,7 +120,7 @@ Valeurs canoniques dans l'ordre du workflow :
 
 ---
 
-## 6. Statut des projets (base Projets)
+## 8. Statut des projets (base Projets)
 
 | Statut | Usage |
 |---|---|
@@ -93,22 +130,22 @@ Valeurs canoniques dans l'ordre du workflow :
 | `Terminé` | Projet livré et clôturé |
 | `Archivé` | Conservé pour référence, non actif |
 
-Les **phases internes** (Stabilisation, Phase 1, Phase 2…) se documentent dans le champ **Notes** du projet, pas dans le statut. Exemple : `Phase : Stabilisation — Phase 1 livrée, Phase 2 en préparation (+500 caméras)`.
+Les **phases internes** (Stabilisation, Phase 1…) se documentent dans le champ **Notes** du projet, pas dans le statut.
 
 ---
 
-## 7. Nommage des tâches
+## 9. Nommage des tâches
 
 Format : `[Verbe d'action] [Objet] [Contexte si nécessaire]`
 
 - Commencer par un verbe à l'infinitif : *Mettre à jour*, *Valider*, *Finaliser*, *Tester*, *Envoyer*
 - Éviter les noms sans verbe : ~~"Driver NMEA"~~ → **"Finaliser tests Driver NMEA"**
-- Le contexte entre parenthèses est ok pour les détails techniques : `"Revoir avec Kai pour la reconnaissance faciale (infos en Sparameter)"`
-- Pas de projet dans le nom si la relation Projet est remplie : ~~"Tests Drones DJI PTT"~~ → **"Tests Drones DJI — validation précision GPS avec AGH"**
+- Le contexte entre parenthèses est ok pour les détails techniques
+- Pas de projet dans le nom si la relation Projet est remplie
 
 ---
 
-## 8. Champs obligatoires à la création d'une tâche pro
+## 10. Champs obligatoires à la création d'une tâche pro
 
 | Champ | Obligatoire | Notes |
 |---|---|---|
@@ -117,27 +154,31 @@ Format : `[Verbe d'action] [Objet] [Contexte si nécessaire]`
 | Support | Oui | PC Portable par défaut |
 | Pays / Lieu | Oui | Thaïlande ou Global pour les tâches pro |
 | Statut | Oui | Pas commencé par défaut |
-| Priorité | Oui | Voir table de correspondance §1 |
+| 🚨 Urgence | Oui | Voir table §1 |
+| 💡 Importance | Oui | Voir table §2 |
+| 🔋 Énergie | Si connue | Laisser vide si incertaine |
 | Catégorie | Oui | `Travail` pour les tâches pro |
 | Projet | Oui (si rattaché) | Relation vers la base Projets |
 | Échéance | Si connue | Format AAAA-MM-JJ |
 
 ---
 
-## 9. Deadlines — décalage et estimation
+## 11. Deadlines — décalage et estimation
 
-- Si une deadline est donnée en termes relatifs ("juin 2026"), utiliser le dernier jour du mois : `2026-06-30`
-- Si une fourchette est donnée ("juin/juillet 2026"), prendre la borne haute : `2026-07-31`
+- Si une deadline est donnée en termes relatifs ("juin 2026") : dernier jour du mois `2026-06-30`
+- Si une fourchette ("juin/juillet 2026") : borne haute `2026-07-31`
 - Si pas de deadline : laisser vide (ne pas inventer)
-- Si on demande un décalage ("repousse de 2 mois") : +2 mois calendaires sur la date originale
+- Si décalage demandé ("repousse de 2 mois") : +2 mois calendaires sur la date originale
 
 ---
 
-## 10. Responsabilité de standardisation
+## 12. Responsabilité de standardisation
 
 **Tout agent** qui reçoit des tâches de l'extérieur (briefing, autre agent, liste brute) est responsable de :
-1. Traduire les priorités vers les valeurs Notion canoniques (§1)
-2. Estimer la durée si non fournie (§2)
-3. Appliquer le nommage standard (§7)
-4. Remplir tous les champs obligatoires (§8)
-5. Logguer les tâches créées dans SESSION_LOG.md
+1. Traduire l'urgence vers la valeur Notion canonique (§1)
+2. Traduire l'importance vers la valeur Notion canonique (§2)
+3. Estimer l'énergie si évidente (§3)
+4. Estimer la durée si non fournie (§4)
+5. Appliquer le nommage standard (§9)
+6. Remplir tous les champs obligatoires (§10)
+7. Logguer les tâches créées dans SESSION_LOG.md

@@ -10,15 +10,12 @@ Ces questions doivent orienter le brainstorming. Toute IA qui propose une répon
 
 ---
 
-## Q2 — Mécanisme technique des routines récurrentes
+## ~~Q2 — Mécanisme technique des routines récurrentes~~ — RÉSOLUE
 
-Notion **n'a pas de récurrence native** : une tâche marquée "Terminée" ne se recrée pas automatiquement. Plusieurs options :
-
-- Script Python planifié (cron) qui recrée les tâches selon la propriété `Récurrence`
-- Make.com avec un scénario de polling quotidien
-- Duplication manuelle assistée par l'IA à la demande
-
-Critère de décision clé : combien de tâches récurrentes Franck a-t-il vraiment dans son système ? Si < 10, la duplication manuelle suffit. Si > 30, il faut un script.
+**Décision (01/07/2026)** : Make.com avec cron/scheduling + appel Notion API.
+- **Routine du Matin** : reset chaque nuit à une heure définie (ex: 3h00) → toutes les cases décochées
+- **Liste Avant Aéroport** : reset 24h après le dernier check (ou à la demande manuelle)
+- En attente : création du scénario Make.com + définir l'heure exacte de reset matin
 
 ---
 
@@ -26,17 +23,21 @@ Critère de décision clé : combien de tâches récurrentes Franck a-t-il vraim
 
 **Décision partielle (30/06/2026)** : le workflow "Capture d'abord, tri ensuite" est validé. Saisie minimale (Nom + Durée), enrichissement différé par l'IA.
 
+**Décision complémentaire (01/07/2026)** : le workflow "Capture libre → log" complète ce dispositif — Franck peut dire à l'IA ce qu'il a fait après coup, sans planification préalable.
+
 Question restante :
-- Quel est le bon rythme de triage ? Hebdomadaire ? À la demande ? Déclenché automatiquement quand la base atteint X entrées non renseignées ?
+- Quel est le bon rythme de triage des tâches sans propriétés ? Hebdomadaire ? À la demande ? Déclenché automatiquement quand la base atteint X entrées non renseignées ?
 
 ---
 
 ## Q4 — Mécanique réelle de la délégation IA — CLARIFIÉE
 
-**Décision (30/06/2026)** : délégation **manuelle** pour l'instant. Franck bascule le statut lui-même et interpelle l'IA. Pas de polling/webhook/autonomie dans le scope actuel.
+**Décision (30/06/2026)** : délégation **manuelle** pour l'instant. Franck bascule le statut lui-même et interpelle l'IA.
+
+**Extension (01/07/2026)** : Make.com peut également détecter automatiquement si une tâche est délégable à une IA (ex: rédaction, code, analyse) vs physique (sortir les poubelles, aller au bureau). En cours de mise en place.
 
 Question restante (future) :
-- Si le volume de délégations augmente, quand bascule-t-on vers un mécanisme semi-automatique ? Quel seuil déclencherait la décision ?
+- Si le volume de délégations augmente, quand bascule-t-on vers un mécanisme semi-automatique ?
 
 ---
 

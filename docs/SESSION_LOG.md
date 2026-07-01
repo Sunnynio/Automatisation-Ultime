@@ -118,22 +118,22 @@ Tous les scripts existants étaient du markdown déguisé en Python — réécri
   - `--zombie` : tâches bloquées > 21j → prompt nettoyage
   - `--support`, `--duree`, `--pays` : filtre contextuel → prompt Session Planning
   - tri par Priorité > Durée > Échéance, noms de propriétés réels
-- `scripts/automation/context_filter.py` — Session Planning interactif (questions-réponses si sans args, CLI si avec args)
-- `scripts/automation/daily_digest.py` — **nouveau** : digest quotidien avec stats (terminé/en cours/en pause)
-- `scripts/automation/zombie_cleanup.py` — **nouveau** : tâches "Pas commencé" > N jours avec prompt de décision
-- `scripts/utils/config.py` — module Python réel (chargement .env, client Notion)
-- `scripts/utils/helpers.py` — utilitaires Python réels (get_prop, filter_active, sort_by_priority)
+- `scripts/automation/context_filter.py` — Session Planning interactif
+- `scripts/automation/daily_digest.py` — digest quotidien avec stats
+- `scripts/automation/zombie_cleanup.py` — tâches "Pas commencé" > N jours avec prompt de décision
+- `scripts/utils/config.py` — chargement .env, client Notion
+- `scripts/utils/helpers.py` — utilitaires Python (get_prop, filtres, tri)
 - `scripts/utils/logger.py` — logger minimal fonctionnel
-- `.env.example` — converti en vrai fichier .env template (plus du markdown)
+- `.env.example` — converti en vrai fichier .env template
 - `requirements.txt` — créé (notion-client, python-dotenv)
 
 ### Décisions prises
-- Scripts **standalone** (pas d'imports croisés entre scripts) → pas de problème de PYTHONPATH pour l'utilisateur
+- Scripts **standalone** (pas d'imports croisés entre scripts)
 - `.env.example` contient les IDs réels des bases (Master Board + Daily Digest) comme référence
 
 ### En attente de validation
 - Tester les scripts avec le vrai NOTION_TOKEN (à configurer dans `.env` local)
-- Valider que l'intégration Notion a bien accès aux deux bases (Master Board + Daily Digest)
+- Valider que l'intégration Notion a bien accès aux deux bases
 
 ---
 
@@ -150,7 +150,7 @@ Tous les scripts existants étaient du markdown déguisé en Python — réécri
 - Création de la page **✈️ Avant Aéroport** (sous Routines) avec 9 cases à cocher :
   - URL : https://app.notion.com/p/38fcace54fe1819fa390d727895c733e
   - Billets / Hôtel / Passeport / Adaptateur / Chargeurs / Clés / Clim OFF / Lumières OFF / Fenêtres OFF
-- **Déplacement** de la page Routines à la racine du workspace (elle avait été mise par erreur dans le Master Board)
+- **Déplacement** de la page Routines à la racine du workspace
 
 ### En attente de validation
 - Configurer les widgets sur mobile/PC depuis ces URLs
@@ -164,8 +164,8 @@ Tous les scripts existants étaient du markdown déguisé en Python — réécri
 **Architecture deux niveaux pour les tâches professionnelles**
 - **Master Board** = toutes les actions (perso + pro), source de vérité unique
 - **Projets DB** = base dédiée aux gros projets multi-étapes (avec suivi client, statut, budget)
-- Lien : propriété RELATION bidirectionnelle entre les deux bases (Master Board → Projets, Projets → Tâches)
-- Pas de base Clients pour l'instant (solo) — champ Client en SELECT dans Projets, upgradable en RELATION plus tard
+- Lien : propriété RELATION bidirectionnelle entre les deux bases
+- Pas de base Clients pour l'instant (solo) — champ Client en SELECT dans Projets
 
 ---
 
@@ -174,91 +174,32 @@ Tous les scripts existants étaient du markdown déguisé en Python — réécri
 ### Actions effectuées
 
 **Notion (via MCP)**
-
-**Base Projets créée** :
-  - URL : https://app.notion.com/p/a1b22b74a7414247a190eb999423a5d8
-  - Data Source ID : `collection://f4717411-7e57-41b2-9023-90effa022bad`
-  - Propriétés : Nom du projet (TITLE), Client (SELECT), Statut projet (SELECT), Priorité projet (SELECT), Budget (RICH_TEXT), Deadline (DATE), Notes (RICH_TEXT), Tâches (RELATION → Master Board)
-
-**Relation bidirectionnelle configurée** :
-  - Master Board : propriété **Projet** (RELATION → Projets DB)
-  - Projets DB : propriété **Tâches** (RELATION → Master Board, sens inverse automatique)
-
-**Projets créés dans la base Projets** :
-  - **PTT LNG** : https://app.notion.com/p/38fcace54fe1810f8beec6b501209f2d
-    - Client : PTT, Statut : En cours, Priorité : 🔴 Urgent
-  - **Siam Paragon** : https://app.notion.com/p/38fcace54fe18125ab44e8e2a0cd4339
-    - Client : Siam Paragon, Statut : En cours, Priorité : 🟠 Important
-
-**Options Durée étendues dans le Master Board** :
-  - Ajout de "1h30" et "2h" aux options SELECT existantes (10 min, 30 min, 1h, Demi-journée, 1 jour +)
-
-**10 tâches créées dans le Master Board**, toutes liées à leur projet via la relation Projet :
-
-  *PTT LNG (5 tâches)* :
-  - Analyse des besoins PTT LNG — 2h, PC Portable, Thaïlande, 🔴 Urgent
-  - Préparer la proposition commerciale PTT LNG — 1 jour +, PC Portable, Global, 🔴 Urgent
-  - Présentation initiale PTT LNG — 1h, PC Portable, Thaïlande, 🔴 Urgent
-  - Rédiger le rapport technique PTT LNG — Demi-journée, PC Portable, Global, 🟠 Important
-  - Suivi hebdomadaire PTT LNG — 30 min, Téléphone, Global, 🟡 Secondaire
-
-  *Siam Paragon (5 tâches)* :
-  - Analyse des besoins Siam Paragon — 2h, PC Portable, Thaïlande, 🟠 Important
-  - Préparer le devis Siam Paragon — Demi-journée, PC Portable, Global, 🟠 Important
-  - Visite du site Siam Paragon — 2h, Téléphone, Thaïlande, 🔴 Urgent
-  - Présentation de la solution Siam Paragon — 1h, PC Portable, Thaïlande, 🟠 Important
-  - Planification des interventions Siam Paragon — 1h30, PC Portable, Global, 🟡 Secondaire
-
-  Toutes les tâches : Catégorie=Travail, Statut=Pas commencé
+- **Base Projets créée** : https://app.notion.com/p/a1b22b74a7414247a190eb999423a5d8
+- Relation bidirectionnelle configurée entre Master Board et Projets
+- Projets créés : PTT LNG + Siam Paragon (10 tâches pro rattachées)
+- Options Durée étendues : ajout de "1h30" et "2h"
 
 ### Décisions prises
-- Architecture deux niveaux actée (voir session brainstorming ci-dessus)
+- Architecture deux niveaux actée
 - SELECT Client dans Projets (pas de base Clients dédiée pour l'instant)
-- Pas de propriété "Projet" visible dans les tâches perso (inutilisée = non gênante)
 
 ### En attente de validation
-- Vérifier dans Notion que la relation Projet est bien visible sur chaque tâche
-- Configurer une vue "Par projet" dans le Master Board (filtre Catégorie=Travail groupé par Projet)
-- Tester les scripts Python avec NOTION_TOKEN réel (`.env` à configurer en local)
-- Vérifier que l'intégration Notion a accès à la base Projets (partager la base avec l'intégration)
+- Vue "Par projet" dans le Master Board (filtre Catégorie=Travail groupé par Projet)
+- Tester les scripts Python avec NOTION_TOKEN réel
 
 ---
 
 ## 2026-06-30 — Claude (Claude Code — standardisation + tâches réelles Siam Paragon / PTT LNG)
 
-### Contexte
-Tâches reçues de deux agents distincts avec des formats de priorité hétérogènes (HAUTE/MOYENNE vs 🔴/🟡/⚠️). Standardisation effectuée avant saisie Notion.
-
 ### Actions effectuées
 
-**Notion (via MCP)**
+**Notion (via MCP)** — 11 tâches réelles créées (Siam Paragon 5 + PTT LNG 6), toutes standardisées
 
-*11 tâches créées dans le Master Board, toutes liées à leur projet via relation Projet :*
-
-*Siam Paragon (5 tâches)* — toutes Catégorie=Travail, Statut=Pas commencé :
-- Mettre à jour le server et le driver — 2h, PC Portable, Thaïlande, 🔴 Urgent, deadline 02/07/2026
-- Switch Synology et vidéo sur ACK (pas sur alarm) — 1h30, PC Portable, Thaïlande, 🔴 Urgent, deadline 05/07/2026
-- Revoir avec Kai pour améliorer la reconnaissance faciale (infos en Sparameter) — 1h, PC Portable, Thaïlande, 🔴 Urgent, deadline 09/07/2026
-- Résoudre le problème avec les compteurs d'alarme — 2h, PC Portable, Thaïlande, 🔴 Urgent, deadline 11/07/2026
-- Envoyer sur le vidéo wall uniquement les alarmes priorité A — 1h, PC Portable, Thaïlande, 🟠 Important, deadline 12/07/2026
-
-*PTT LNG (6 tâches)* — toutes Catégorie=Travail, Statut=Pas commencé (deadlines originales juin/juillet 2026 repoussées de +2 mois) :
-- Tests Drones DJI — validation précision GPS avec AGH — Demi-journée, PC Portable, Thaïlande, 🔴 Urgent, deadline 30/09/2026
-- Finaliser tests Driver NMEA — 2h, PC Portable, Thaïlande, 🟡 Secondaire, deadline 31/08/2026
-- Lancer développement Driver HGH — Demi-journée, PC Portable, Thaïlande, 🟡 Secondaire, deadline 31/08/2026
-- Tests Laser + Système audio — Demi-journée, PC Portable, Thaïlande, 🟡 Secondaire, deadline 30/09/2026
-- Synchroniser avec T-Solution et Prism — 30 min, Téléphone, Global, 🟡 Secondaire, pas de deadline (récurrent)
-- Valider budget intégration Drones DJI (PTT) — 1h, PC Portable, Thaïlande, 🟠 Important, deadline 15/08/2026
-
-*Siam Paragon — projet mis à jour :*
-- Notes projet mise à jour : "Phase : Stabilisation — Phase 1 livrée, Phase 2 en préparation (+500 caméras)"
-
-**Git**
-- Création de `docs/STANDARDS.md` — table de correspondance des priorités, nommage, champs obligatoires, règles pour agents multi-IA
+**Git** — Création de `docs/STANDARDS.md`
 
 ### Décisions prises
-- Labels externes (HAUTE/MOYENNE/⚠️/🔴) toujours traduits en valeurs Notion canoniques avant saisie (cf. STANDARDS.md §1)
-- Phases projet (Stabilisation, Phase 1…) dans le champ Notes, pas dans le statut
+- Labels externes (HAUTE/MOYENNE/⚠️/🔴) toujours traduits en valeurs Notion canoniques avant saisie
+- Phases projet dans le champ Notes, pas dans le statut
 - STANDARDS.md = référence unique pour tous les agents futurs
 
 ---
@@ -268,13 +209,47 @@ Tâches reçues de deux agents distincts avec des formats de priorité hétérog
 ### Actions effectuées
 - Analyse complète des deux branches (`main` et `claude/automatisation-ultime-docs-m3tv2e`)
 - Création de `CLAUDE.md` à la racine — fichier d'initialisation auto-chargé par Claude Code
-  - Contient : décisions figées, ordre de lecture minimum (5 fichiers), règle de contribution, URLs Notion actives, stack technique
-  - Objectif : permettre à tout agent IA de démarrer en < 500 tokens sans relire l'historique complet
-- Mise à jour de `docs/SESSION_LOG.md` (cette entrée)
+- Mise à jour de `docs/SESSION_LOG.md`
 
 ### Décisions prises
-- Aucune décision architecturale — ajout documentaire uniquement
-- `CLAUDE.md` est le point d'entrée canonique pour Claude Code ; les autres IA utilisent le README + `docs/PROJECT_BRIEF.md`
+- `CLAUDE.md` = point d'entrée canonique pour Claude Code
+
+---
+
+## 2026-07-01 — Franck + Claude (Claude Code — brainstorming features complètes)
+
+### Décisions prises
+
+**Schéma Master Board — remplacement Priorité par Urgence + Importance**
+- L'ancienne propriété `Priorité` (champ unique) est **remplacée** par deux champs séparés :
+  - `🚨 Urgence` (SELECT) : 🔴 Urgent / 🟡 Normal / ⚪ Non urgent (critère : deadline/temps)
+  - `💡 Importance` (SELECT) : 🔴 Critique / 🟠 Important / 🟡 Secondaire / ⚪ Optionnel (critère : impact)
+  - Logique Eisenhower : Urgent+Critique → maintenant ; Non urgent+Critique → planifier ; Urgent+Secondaire → déléguer
+
+**Nouveau champ : Énergie**
+- `🔋 Énergie` (SELECT) : Faible / Moyenne / Élevée
+- Filtre dans Session Planning pour adapter les suggestions à l'état du moment
+
+**Reset automatique des routines (via Make.com) — décision**
+- Routine du Matin : reset chaque nuit (ex: 3h00) → toutes les cases décochées automatiquement
+- Liste Avant Aéroport : reset 24h après le dernier check (ou à la demande)
+- Mécanisme : scénario Make.com + appel Notion API
+
+**Nouveau Workflow 7 : Capture libre → log automatique**
+- Dire à l'IA "j'ai fait ça, ça, ça" → tâche existante cochée / tâche inexistante créée + cochée
+- Alimente automatiquement le Daily Digest
+
+**Extension Workflow 6 (Délégation) — détection IA vs physique**
+- L'IA analyse les tâches décrites et détecte si délégable à une IA (rédaction, code, analyse) vs physique
+- Si délégable → tag auto `À déléguer à l'IA` + ajouté à la queue de l'agent
+
+**Notes perso dans Notion (structure libre)**
+- Pages Notion hors Master Board pour mémos non-actionnables
+- Cas d'usage : salons d'aéroport (contenu, Dragon Pass), notes vrac remplaçant WhatsApp
 
 ### En attente de validation
-- Franck définira oralement les nouvelles features attendues lors de la prochaine session
+- Créer les propriétés Urgence + Importance dans le Master Board Notion (supprime Priorité)
+- Créer la propriété Énergie dans le Master Board
+- Mettre en place le scénario Make.com pour le reset des routines
+- Définir l'heure exacte de reset de la routine du matin (suggestion : 3h00)
+- Mettre à jour les scripts Python pour utiliser Urgence + Importance au lieu de Priorité

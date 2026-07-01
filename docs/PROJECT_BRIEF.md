@@ -1,7 +1,7 @@
 # PROJECT_BRIEF — Automatisation-Ultime
 
 > Document de référence stable. Ne pas modifier sans décision explicite.
-> Dernière mise à jour : 2026-06-30
+> Dernière mise à jour : 2026-07-01
 
 ---
 
@@ -9,9 +9,9 @@
 
 Créer un **Centre de Commande Personnel** pour un grand voyageur (Franck, profil multi-pays / multi-supports) qui combine :
 - **Capture rapide** des tâches (vocale ou écrite, avec tri différé par l'IA)
-- **Exécution intelligente** : session planning selon le temps disponible, le support et la localisation
+- **Exécution intelligente** : session planning selon le temps disponible, le support, la localisation et l'énergie
 - **Interface visuelle minimaliste** (widgets sur téléphone/PC) sans interaction obligatoire
-- **Délégation manuelle** aux agents IA pour les tâches qui le méritent
+- **Délégation** aux agents IA pour les tâches qui le méritent
 
 ---
 
@@ -28,52 +28,49 @@ Google Calendar                    Notion (Master Board)
                           (interface principale)    (automatisation, analyse)
                           voix/texte, GPS, Google   scripts Python, livrables,
                           Calendar, Gmail, Drive     daily digest, zombie cleanup
+                                       │
+                                   Make.com
+                             (reset routines, détection
+                              IA vs physique, orchestration)
 ```
 
-> **Principe acté** : Calendar et Notion sont deux espaces distincts, pas synchronisés. Calendar gère les événements fixes (réunions, vols, rendez-vous). Notion gère les tâches et projets. Pas de sync bidirectionnelle — trop fragile, trop de maintenance.
+> **Principe acté** : Calendar et Notion sont deux espaces distincts, pas synchronisés. Calendar gère les événements fixes. Notion gère les tâches et projets. Pas de sync bidirectionnelle.
 
 | Composant | Rôle |
 |---|---|
-| **Notion** | Source de vérité unique (Master Board + Projets + Routines), widgets visuels |
+| **Notion** | Source de vérité unique (Master Board + Projets + Routines + Daily Digest + Notes), widgets visuels |
 | **Google Calendar** | Événements fixes uniquement — time blocking manuel |
 | **Gemini** | Interface quotidienne, filtrage GPS, accès écosystème Google |
 | **Mistral / Claude** | Analyse, daily digest, nettoyage zombie, exécution à la demande |
+| **Make.com** | Orchestration : reset automatique des routines, détection IA vs physique |
 
 ---
 
-## Architecture Notion — deux niveaux
+## Architecture Notion — trois niveaux
 
 ```
-Master Board (toutes les tâches — perso + pro)
+Master Board (toutes les tâches — actionnables)
        │
        │  propriété RELATION "Projet"
        │
        ▼
 Projets DB (gros projets multi-étapes)
-   - Nom du projet
-   - Client (SELECT)
-   - Statut projet
-   - Priorité projet
-   - Budget / Deadline
-   - Tâches (RELATION inverse → Master Board)
+
+Notes (pages Notion libres — mémos non-actionnables)
 ```
 
 **Règles d'usage** :
-- Une **action isolée** (email, appel, doc court) → Master Board uniquement, sans Projet rattaché
-- Un **gros projet** (plusieurs semaines, plusieurs étapes, client identifié) → créer une entrée Projets + y rattacher toutes les tâches du Master Board
-- Les tâches **perso** restent dans le Master Board, sans Projet (relation vide = OK)
+- Une **action isolable** → Master Board uniquement
+- Un **gros projet** (plusieurs semaines, plusieurs étapes) → créer une entrée Projets + y rattacher les tâches
+- Les **mémos, notes, infos** (non-actionnables) → pages Notes, pas dans le Master Board
 
-**Projets actifs** (au 30/06/2026) :
-- **PTT LNG** — Client : PTT, statut : En cours
-- **Siam Paragon** — Client : Siam Paragon, statut : En cours
+**Projets actifs** (au 30/06/2026) : PTT LNG, Siam Paragon.
 
 ---
 
 ## Schéma des bases Notion
 
 ### Master Board
-
-Propriétés minimales requises pour le filtrage contextuel (garder la liste courte — risque de friction à la saisie) :
 
 | Propriété | Type | Valeurs |
 |---|---|---|
@@ -82,35 +79,54 @@ Propriétés minimales requises pour le filtrage contextuel (garder la liste cou
 | **Support** | Sélection multiple | PC Portable / PC Fixe / Téléphone / Tablette / Global |
 | **Pays/Lieu** | Sélection | Global / Thaïlande / France / Saudi Arabia / Avion / Hôtel / … |
 | **Statut** | Kanban | Pas commencé / En cours / En pause / À déléguer à l'IA / En attente validation / Terminé |
-| **Priorité** | Sélection | 🔴 Urgent / 🟠 Important / 🟡 Secondaire / ⚪ Optionnel |
+| **🚨 Urgence** | Sélection | 🔴 Urgent / 🟡 Normal / ⚪ Non urgent |
+| **💡 Importance** | Sélection | 🔴 Critique / 🟠 Important / 🟡 Secondaire / ⚪ Optionnel |
+| **🔋 Énergie** | Sélection | Faible / Moyenne / Élevée |
 | **Catégorie** | Sélection | Travail / Perso / Voyage / Admin / … |
-| **Projet** | Relation | → base Projets (vide pour les tâches perso, requis pour tâches pro rattachées à un projet) |
+| **Projet** | Relation | → base Projets (vide pour les tâches perso) |
 | **Échéance** | Date | JJ/MM/AAAA |
 | **Notes** | Texte | Libre |
 
-Propriétés optionnelles (ajouter seulement si le besoin est prouvé) : Récurrence, Contexte, Heure de la journée, Dépendances, Délégable à l'IA, Statut IA, Livrable.
+> **Remplacement de `Priorité`** : l'ancien champ unique est remplacé par `Urgence` (deadline/temps) et `Importance` (impact). Logique Eisenhower : Urgent+Critique → maintenant ; Non urgent+Critique → planifier ; Urgent+Secondaire → déléguer ; Non urgent+Optionnel → éliminer.
 
-> Propriétés Points et Temps Réel (gamification) : **à supprimer** — la gamification par points est abandonnée au profit du Daily Digest.
+Propriétés optionnelles (ajouter seulement si le besoin est prouvé) : Récurrence, Contexte, Heure de la journée, Dépendances, Délégable à l'IA, Statut IA, Livrable.
 
 ### Base Projets
 
 | Propriété | Type | Notes |
 |---|---|---|
 | **Nom du projet** | Titre | Libre |
-| **Client** | Sélection | PTT / Siam Paragon / … (upgradable en RELATION si collaboration) |
+| **Client** | Sélection | PTT / Siam Paragon / … |
 | **Statut projet** | Sélection | Prospect / En cours / En pause / Terminé / Archivé |
 | **Priorité projet** | Sélection | 🔴 Urgent / 🟠 Important / 🟡 Secondaire |
-| **Budget** | Texte | Libre (pas de calcul automatique pour l'instant) |
+| **Budget** | Texte | Libre |
 | **Deadline** | Date | Date cible de livraison |
 | **Notes** | Texte | Contexte, historique, liens utiles |
-| **Tâches** | Relation | ← Master Board (sens inverse automatique de la propriété Projet) |
+| **Tâches** | Relation | ← Master Board |
+
+### Pages Notes (hors bases)
+
+Structure libre — pages Notion nommées par thème, pas une base de données :
+- **Salons d'aéroport** — une sous-page par salon : contenu consommé, remboursement Dragon Pass
+- **Mémos voyage** — notes vrac par destination/date
+- Remplacement de WhatsApp pour les notes personnelles non-actionnables
+
+### Base Daily Digest
+
+| Propriété | Type | Notes |
+|---|---|---|
+| **Date** | Date | |
+| **Résumé** | Texte | Généré par l'IA |
+| **Tâches terminées** | Nombre | Tâches planifiées + capture libre |
+| **Temps total** | Texte | |
+| **Observations** | Texte | Patterns, remarques |
 
 ---
 
-## Workflows validés (scope actuel)
+## Workflows validés
 
 ### Principe transversal : Notion natif d'abord
-Tester les filtres et vues sauvegardés dans Notion avant d'écrire tout script Python. Un filtre Notion "téléphone + global + < 30 min + pas commencé" couvre 80 % du besoin à 0 % de maintenance.
+Tester les filtres et vues sauvegardés dans Notion avant d'écrire tout script Python.
 
 ---
 
@@ -122,66 +138,80 @@ Tester les filtres et vues sauvegardés dans Notion avant d'écrire tout script 
 - Triage différé : une fois par semaine (ou à la demande), l'IA parcourt les entrées sans propriétés et propose des valeurs inférées
 - Franck valide en batch
 
-**Outils** : Notion (saisie rapide), IA (enrichissement des propriétés par batch)
-
 ---
 
 ### 2. Session Planning ("J'ai 3h devant moi")
-**Besoin** : structurer une session de travail complète, pas juste trouver une tâche.
+**Besoin** : structurer une session de travail complète.
 
 **Fonctionnement** :
-1. Franck indique son contexte : temps total, support, localisation
-2. L'IA interroge Notion (filtres Durée + Support + Pays + Statut ≠ Terminé)
-3. L'IA construit un mini-agenda pour toute la session (ex: tâche A 1h → pause → tâche B 45 min → tâche C 30 min)
-4. Tri : Priorité > Durée > Échéance
-
-**Algorithme de tri** : Priorité > Durée > Échéance (décidé le 30/06)
+1. Franck indique son contexte : temps total, support, localisation, **niveau d'énergie**
+2. L'IA interroge Notion (filtres Durée + Support + Pays + Énergie + Statut ≠ Terminé)
+3. L'IA construit un mini-agenda pour toute la session (ex: tâche A 1h → pause → tâche B 45 min)
+4. Tri : Urgence > Importance > Durée > Échéance
 
 ---
 
-### 3. Routines (Matin / Soir / Voyage)
-**Besoin** : checklists réutilisables sans recréer les tâches.
+### 3. Routines (Matin / Soir / Voyage) avec reset automatique
+**Besoin** : checklists réutilisables remises à zéro automatiquement.
 
 **Fonctionnement** :
-- Base Notion dédiée "Routines", liée au Master Board
+- Pages Notion sous "Routines", cases à cocher, widgets sur mobile
 - Types : Matin, Soir, Voyage, Pré-départ, Post-arrivée
-- Widgets Notion pour cocher sur mobile
+
+**Reset automatique (Make.com)** :
+- **Routine du Matin** — reset chaque nuit à une heure définie (ex: 3h00) → toutes les cases décochées automatiquement
+- **Liste Avant Aéroport** — reset 24h après le dernier check (ou à la demande manuelle)
+- Mécanisme : scénario Make.com avec cron/scheduling + appel Notion API pour décocher les cases
 
 ---
 
-### 4. Daily Digest (remplace la gamification par points)
-**Besoin** : garder une vision sur ce qui a été fait chaque jour, ajustable dans le temps.
+### 4. Daily Digest
+**Besoin** : vision sur ce qui a été fait chaque jour.
 
 **Fonctionnement** :
-- En fin de journée (ou à la demande), l'IA analyse les tâches `Statut = Terminé` du jour
-- Génère un résumé court en langage naturel : ce qui a été fait, ce qui reste, patterns émergents
-- Piloté manuellement via IA (Franck demande le digest quand il le souhaite — pas de déclencheur automatique au départ)
-- Stocké dans une base Notion "Daily Digest"
-- **Flexible** : la fréquence (quotidien → hebdo → autre) s'adapte à l'usage réel
-
-> Point de départ : quotidien. On adapte selon ce qui colle vraiment.
+- En fin de journée (ou à la demande), l'IA analyse les tâches `Statut = Terminé` du jour — qu'elles soient planifiées ou capturées librement (voir Workflow 7)
+- Génère un résumé court : ce qui a été fait, ce qui reste, patterns émergents
+- Stats simples : nombre de tâches, temps estimé, distribution Urgence/Importance
+- Piloté manuellement via IA — pas de cron au départ
+- Stocké dans la base Notion "Daily Digest"
 
 ---
 
 ### 5. Nettoyage zombie
-**Besoin** : éviter l'accumulation de tâches obsolètes qui démoralisent.
+**Besoin** : éviter l'accumulation de tâches obsolètes.
 
 **Fonctionnement** :
 - Une fois par semaine, l'IA remonte les tâches `Statut = Pas commencé` depuis > 21 jours
-- Pour chaque tâche : Garder / Archiver / Décomposer en sous-tâches ?
+- Pour chaque tâche : Garder / Archiver / Décomposer ?
 - Franck valide en 5-10 minutes
 
 ---
 
-### 6. Délégation manuelle ("À déléguer à l'IA")
-**Besoin** : confier une tâche à une IA sans la faire soi-même.
+### 6. Délégation avec détection IA vs physique
+**Besoin** : identifier ce qui est exécutable par une IA vs ce qui nécessite une action physique.
 
 **Fonctionnement** :
-- Franck bascule manuellement le statut "À déléguer à l'IA" et interpelle l'IA de son choix
-- L'IA exécute (email, analyse, rapport), met à jour Notion (lien livrable)
-- Franck valide le livrable
+1. Franck décrit ses tâches à faire à l'IA (ou Make.com les reçoit)
+2. L'IA analyse chaque tâche et détermine :
+   - **Délégable à l'IA** (rédiger un email, analyser un doc, développer du code) → tag automatique `À déléguer à l'IA` + ajouté à la queue de l'agent
+   - **Action physique requise** (sortir les poubelles, aller au bureau) → reste dans le Master Board, statut normal
+3. L'agent IA traite sa queue, produit un livrable, met à jour Notion (lien livrable + `Statut = En attente validation`)
+4. Franck valide le livrable
 
-**Scope actuel** : délégation entièrement manuelle. Pas de détection autonome, pas de polling. L'autonomisation est hors scope pour l'instant.
+**Scope actuel** : la détection peut être faite par l'IA à la demande. L'automatisation via Make.com est en cours de mise en place.
+
+---
+
+### 7. Capture libre → log automatique
+**Besoin** : enregistrer ce qui a été fait sans avoir tout planifié à l'avance.
+
+**Fonctionnement** :
+1. Franck dit à l'IA : "Ce matin j'ai fait ça, ça, ça"
+2. L'IA cherche chaque item dans le Master Board :
+   - **Tâche trouvée** → `Statut = Terminé` + date de complétion
+   - **Tâche non trouvée** → créée dans le Master Board + `Statut = Terminé` immédiatement
+3. Toutes les tâches capturées alimentent le Daily Digest du soir
+4. Aucune planification préalable requise — saisie après coup
 
 ---
 
