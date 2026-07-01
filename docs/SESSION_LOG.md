@@ -314,11 +314,44 @@ Tous les scripts existants étaient du markdown déguisé en Python — réécri
 - `Priorité projet` dans la base Projets utilise encore l'ancien format (🔴 Urgent / 🟠 Important / 🟡 Secondaire). Décider si ce champ-projet doit aussi adopter la logique Eisenhower (deux champs séparés) ou rester tel quel pour simplifier la gestion des projets.
 
 ### En attente Franck (liste complète, non modifiée)
-1. **Notion UI** : créer la vue "Par projet" dans le Master Board (filtre Catégorie=Travail, groupé par Projet)
+1. ~~**Notion UI** : créer la vue "Par projet" dans le Master Board~~ → **FAIT** (session suivante, via MCP)
 2. **Mobile/PC** : installer les widgets Routines (☀️ Matin + ✈️ Aéroport)
 3. **Make.com** : scénario reset Routine du Matin (+ décider l'heure — suggestion 3h00)
 4. **Make.com** : scénario reset Avant Aéroport (24h après dernier check)
-5. **Local** : `cp .env.example .env` → remplir NOTION_TOKEN + NOTION_DATABASE_ID → tester les scripts
+5. **Local** : `cp .env.example .env` → remplir NOTION_TOKEN → tester les scripts
 6. **Agent dispatch** : coller `prompts/DISPATCH_AGENT.md` comme system prompt et valider le comportement
 7. **Décision** : `Priorité projet` dans base Projets — garder ou splitter en Urgence+Importance ?
 8. **Décision** : workflow Gemini/Mistral pour contributions au repo (Q5 ouverte)
+
+---
+
+## 2026-07-01 — Claude (Claude Code — schéma Notion + merge branches)
+
+### Actions effectuées
+
+**Schéma Notion Master Board — 3 champs corrigés via DDL**
+
+Correction réussie après échec de la session précédente (le bug était l'échappement `\'` de l'apostrophe — remplacé par `''` SQL standard) :
+
+- `Support` (MULTI_SELECT) : **+ Tablette** (yellow) + **Global** (default)
+  - État final : PC Portable / PC Fixe / Téléphone / Tablette / Global
+- `Statut` (SELECT) : **+ En pause** (orange) + **En attente validation** (yellow)
+  - État final : Pas commencé / En cours / En pause / À déléguer à l'IA / En attente validation / Terminé
+- `Pays / Lieu` (SELECT) : **+ Saudi Arabia** (purple) + **Avion** (gray) + **Hôtel** (pink)
+  - État final : Global / Thaïlande / France / Singapour / Malaisie / Maldives / Saudi Arabia / Avion / Hôtel
+
+Le schéma Notion est désormais **100% aligné** avec `docs/STANDARDS.md` et les dicts Python.
+
+**Git — merge de branches**
+- Les fichiers poussés via GitHub MCP lors des sessions précédentes étaient sur `claude/automatisation-ultime-docs-m3tv2e`
+- Mergés en fast-forward dans `claude/project-init-setup-2xtunh` (branche désignée pour cette session)
+- Tout le travail est maintenant sur la bonne branche
+
+### En attente Franck (liste mise à jour)
+1. **Local** : `cp .env.example .env` → remplir `NOTION_TOKEN` → tester les scripts **(BLOQUANT)**
+2. **Mobile/PC** : installer les widgets Routines (☀️ Matin + ✈️ Aéroport)
+3. **Make.com** : scénario reset Routine du Matin
+4. **Make.com** : scénario reset Avant Aéroport (moins urgent — peut rester manuel)
+5. **Agent dispatch** : coller `prompts/DISPATCH_AGENT.md` comme system prompt et valider
+6. **Décision** : `Priorité projet` dans base Projets — garder ou splitter ?
+7. **Décision** : workflow Gemini/Mistral (Option A/B/C dans `docs/TODO_FRANCK.md`)
