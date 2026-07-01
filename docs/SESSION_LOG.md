@@ -349,6 +349,61 @@ Le schéma Notion est désormais **100% aligné** avec `docs/STANDARDS.md` et le
 
 ### En attente Franck (liste mise à jour)
 1. **Local** : `cp .env.example .env` → remplir `NOTION_TOKEN` → tester les scripts **(BLOQUANT)**
+
+---
+
+## 2026-07-01 — Claude (Claude Code — création base Spots + migration Google Keep)
+
+### Actions effectuées
+
+**Notion (via MCP)**
+
+**Base "Spots" créée** :
+- URL : https://app.notion.com/p/e737ee78903f473faf6e1fbc4f5a6dac
+- Data Source ID : `collection://70d0d3e6-8fba-4550-ae26-6f3edce40a18`
+- Schéma : Nom (TITLE), Type (MULTI_SELECT), Statut (SELECT), Pays (SELECT), Ville (TEXT), Prix (TEXT), Ambiance (MULTI_SELECT), Note (NUMBER), Commentaire (TEXT), Google Maps (URL)
+- Champ `Google Maps` prévu pour intégration future
+
+**10 spots importés depuis Google Keep** :
+
+*Vietnam (4 spots) — Statut : À visiter*
+- God Valley — Da Lat — Activité — Solo/Potes
+- Crazy House — Da Lat — Activité + Hôtel — Solo/Potes
+- Datanla Waterfall — Da Lat — Activité
+- Golden Bridge — Da Nang, Bà Nà Hills — Activité
+
+*France (4 spots) — Statut : Visité / Favori*
+- L'Européen — Paris, Gare de Lyon — Restaurant — Note 9 → **Favori**
+- Le Comptoir — Paris — Restaurant — Note 8 → Visité
+- Le Train Bleu — Paris, Gare de Lyon — Bar + Restaurant → Visité
+- Extime Lounge — Paris CDG T2B/2D — Lounge + Activité → Visité
+
+*Thaïlande (2 spots) — Statut : Visité*
+- The Deck BKK — Bangkok Sukhumvit Soi 20 — Restaurant + Brunch — Potes/Date/Pet Friendly
+- Kani Tengoku — Bangkok Centralworld — Restaurant — Potes/Solo
+
+**Page Notion "📋 Règles — Base Spots" créée** :
+- URL : https://app.notion.com/p/390cace54fe1818cb498db1bca63a673
+- Contient toutes les conventions de saisie pour les agents IA et humains
+- Source de vérité Notion (version complète dans STANDARDS.md §12)
+
+**Git**
+- `docs/STANDARDS.md` : ajout §12 (conventions Spots — types, statuts, prix, champs obligatoires)
+- `docs/ARCHITECTURE.md` : ajout base Spots avec URL, Data Source ID, schéma
+- `docs/SESSION_LOG.md` : cette entrée
+
+### Décisions prises
+- Base Spots **séparée** du Master Board (lieux vs tâches — logiques différentes)
+- Champ `Google Maps` (URL) prévu dès le départ — sera rempli quand l'intégration sera active
+- Règles dans Notion ET dans le repo (double source : Notion pour les agents sans accès git, STANDARDS.md pour ceux avec)
+- `++` dans les prix thaïlandais = taxes et service en sus (convention à conserver)
+- Statut `Favori` ≠ `Visité` : réservé aux spots avec note ≥ 8 et recommandation active
+
+### En attente Franck
+- Ajouter les spots restants au fur et à mesure (weed shops, coffee shops, hôtels)
+- Remplir les URLs Google Maps manuellement ou via intégration future
+- Décider si intégration Google Maps = priorité (sinon, le champ attend)
+- Vérifier les statuts des spots Vietnam (marqués "À visiter" par défaut — les passer en Visité si déjà faits)
 2. **Mobile/PC** : installer les widgets Routines (☀️ Matin + ✈️ Aéroport)
 3. **Make.com** : scénario reset Routine du Matin
 4. **Make.com** : scénario reset Avant Aéroport (moins urgent — peut rester manuel)

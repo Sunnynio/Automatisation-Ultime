@@ -27,6 +27,14 @@
   - URL : https://app.notion.com/p/30342149a740489f9cb85b99e82e7486
   - Data Source ID : `collection://83292ab8-5336-4e77-90f4-811ef80a9a7f`
   - Propriétés : Date (DATE), Résumé (RICH_TEXT), Tâches terminées (NUMBER), Temps total (RICH_TEXT), Observations (RICH_TEXT)
+- **Base "Spots"** :
+  - URL : https://app.notion.com/p/e737ee78903f473faf6e1fbc4f5a6dac
+  - Data Source ID : `collection://70d0d3e6-8fba-4550-ae26-6f3edce40a18`
+  - Rôle : inventaire personnel des lieux recommandés (restos, bars, hôtels, activités, coffee shops, weed shops)
+  - Propriétés : Nom (TITLE), Type (MULTI_SELECT), Statut (SELECT), Pays (SELECT), Ville (TEXT), Prix (TEXT), Ambiance (MULTI_SELECT), Note (NUMBER), Commentaire (TEXT), Google Maps (URL)
+  - 10 entrées au 01/07/2026 (migration Google Keep)
+  - Intégration Google Maps prévue (champ URL déjà en place)
+  - **Règles** : voir `docs/STANDARDS.md` §12 + page Notion "📋 Règles — Base Spots"
 - **Page "Routines"** (racine du workspace) :
   - URL : https://app.notion.com/p/38fcace54fe1811cb644eb50e95fc648
   - **☀️ Routine du Matin** : https://app.notion.com/p/38fcace54fe1819e8b68f3208b6c7d1c

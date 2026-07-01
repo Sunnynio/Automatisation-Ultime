@@ -172,7 +172,84 @@ Format : `[Verbe d'action] [Objet] [Contexte si nécessaire]`
 
 ---
 
-## 12. Responsabilité de standardisation
+## 12. Base Spots — conventions de saisie
+
+La base **Spots** (URL : https://app.notion.com/p/e737ee78903f473faf6e1fbc4f5a6dac) est distincte du Master Board. Elle suit ses propres règles.
+
+### Types disponibles (MULTI_SELECT — cumulables)
+
+| Valeur | Usage |
+|---|---|
+| `Activité` | Visite, randonnée, attraction, parc, expérience |
+| `Restaurant` | Tout établissement de restauration assis |
+| `Bar` | Bar à cocktails, à vins, pub |
+| `Hôtel` | Hébergement — hôtel, auberge, resort |
+| `Coffee Shop` | Café de travail, coworking informel |
+| `Weed Shop` | Dispensaire, cannabis shop |
+| `Lounge` | Salon d'aéroport, lounge hôtel |
+| `Brunch` | Brunch — peut se cumuler avec Restaurant |
+| `Spa` | Massage, spa, bien-être |
+
+Un spot peut avoir **plusieurs types** : ex. Crazy House → `["Activité", "Hôtel"]`.
+
+### Statuts disponibles
+
+| Valeur | Usage |
+|---|---|
+| `À visiter` | Recommandé mais pas encore fait — **défaut à la création** |
+| `Visité` | Déjà fait |
+| `Favori` | Visité ET recommande vivement (note ≥ 8 suggérée) |
+| `Fermé` | Établissement fermé définitivement |
+
+### Pays disponibles
+
+Même liste que le Master Board : `France` / `Thaïlande` / `Vietnam` / `Singapour` / `Malaisie` / `Maldives` / `Saudi Arabia` / `Global`
+
+Pour ajouter un nouveau pays : le faire dans les deux bases pour rester cohérent.
+
+### Champ Ville
+
+Format libre — inclure ville + quartier/zone dans le même champ si pertinent :
+- `"Bangkok, Sukhumvit Soi 20"` ✓
+- `"Paris, Gare de Lyon"` ✓
+- `"Da Nang, Bà Nà Hills"` ✓
+
+### Champ Prix
+
+Format **libre en texte** (ne pas normaliser — trop variable) :
+- `"27 €"` / `"€€€"` / `"380++ THB"` / `"Gratuit"` / `"Accès 35 €"`
+- La devise est implicite dans le texte
+- `++` indique que taxes et service s'ajoutent (convention thaïlandaise)
+
+### Champ Note
+
+Entier de **0 à 10**. Laisser vide si pas encore visité.
+- 9–10 → Favori quasi systématique
+- 7–8 → Visité, recommandé
+- < 7 → Visité, pas recommandé (ajouter explication dans Commentaire)
+
+### Champ Google Maps
+
+URL complète Google Maps. Laisser vide pour l'instant (intégration prévue).  
+Format : `https://maps.google.com/?q=...` ou URL de partage native.
+
+### Champs obligatoires à la création d'un spot
+
+| Champ | Obligatoire | Notes |
+|---|---|---|
+| Nom | Oui | Nom exact de l'établissement |
+| Type | Oui | Au moins un type |
+| Statut | Oui | `À visiter` par défaut |
+| Pays | Oui | Sélectionner le pays |
+| Ville | Oui | Ville + quartier si pertinent |
+| Prix | Si connu | Texte libre |
+| Ambiance | Si connue | Multi-select |
+| Note | Si visité | 0–10 |
+| Commentaire | Recommandé | Description, plats, conseils |
+
+---
+
+## 13. Responsabilité de standardisation
 
 **Tout agent** qui reçoit des tâches de l'extérieur (briefing, autre agent, liste brute) est responsable de :
 1. Traduire l'urgence vers la valeur Notion canonique (§1)
