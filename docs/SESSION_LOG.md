@@ -247,9 +247,33 @@ Tous les scripts existants étaient du markdown déguisé en Python — réécri
 - Pages Notion hors Master Board pour mémos non-actionnables
 - Cas d'usage : salons d'aéroport (contenu, Dragon Pass), notes vrac remplaçant WhatsApp
 
-### En attente de validation
-- Créer les propriétés Urgence + Importance dans le Master Board Notion (supprime Priorité)
-- Créer la propriété Énergie dans le Master Board
-- Mettre en place le scénario Make.com pour le reset des routines
-- Définir l'heure exacte de reset de la routine du matin (suggestion : 3h00)
-- Mettre à jour les scripts Python pour utiliser Urgence + Importance au lieu de Priorité
+---
+
+## 2026-07-01 — Claude (Claude Code — migration Eisenhower + mise à jour scripts)
+
+### Actions effectuées
+
+**Notion (via MCP) — DDL sur Master Board**
+- `DROP COLUMN "Priorité"` — propriété supprimée
+- `ADD COLUMN "🚨 Urgence"` SELECT : 🔴 Urgent (red) / 🟡 Normal (yellow) / ⚪ Non urgent (default)
+- `ADD COLUMN "💡 Importance"` SELECT : 🔴 Critique (red) / 🟠 Important (orange) / 🟡 Secondaire (yellow) / ⚪ Optionnel (default)
+- `ADD COLUMN "🔋 Énergie"` SELECT : Faible (green) / Moyenne (yellow) / Élevée (red)
+
+**Scripts Python (5 fichiers mis à jour sur branche `claude/automatisation-ultime-docs-m3tv2e`)**
+- `scripts/utils/helpers.py` — URGENCE_ORDER + IMPORTANCE_ORDER, sort_by_priority() refactorisé
+- `scripts/notion_api/fetch_tasks.py` — arg `--energie`, tri Urgence>Importance>Durée>Échéance, affichage mis à jour
+- `scripts/automation/context_filter.py` — arg `--energie`, question interactive énergie, affichage mis à jour
+- `scripts/automation/daily_digest.py` — Urgence+Importance au lieu de Priorité
+- `scripts/automation/zombie_cleanup.py` — Urgence+Importance au lieu de Priorité
+
+**Documentation**
+- `docs/ARCHITECTURE.md` — schéma Master Board mis à jour (Priorité → Urgence+Importance+Énergie)
+- `docs/SESSION_LOG.md` — cette entrée
+
+### En attente (actions Franck uniquement)
+1. **Notion UI** : créer la vue "Par projet" dans le Master Board (filtre Catégorie=Travail, groupé par Projet)
+2. **Mobile/PC** : installer les widgets Routines (☀️ Routine du Matin + ✈️ Avant Aéroport)
+3. **Make.com** : créer le scénario reset Routine du Matin (décider l'heure — suggestion 3h00)
+4. **Make.com** : créer le scénario reset Avant Aéroport (24h après dernier check)
+5. **Local** : copier `.env.example` → `.env`, remplir NOTION_TOKEN + NOTION_DATABASE_ID, tester les scripts
+6. **Décision** : comment Gemini/Mistral accèdent au repo (Q5 ouverte dans OPEN_QUESTIONS.md)
