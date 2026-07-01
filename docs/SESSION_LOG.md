@@ -260,3 +260,21 @@ Tâches reçues de deux agents distincts avec des formats de priorité hétérog
 - Labels externes (HAUTE/MOYENNE/⚠️/🔴) toujours traduits en valeurs Notion canoniques avant saisie (cf. STANDARDS.md §1)
 - Phases projet (Stabilisation, Phase 1…) dans le champ Notes, pas dans le statut
 - STANDARDS.md = référence unique pour tous les agents futurs
+
+---
+
+## 2026-07-01 — Claude (Claude Code — initialisation rapide multi-IA)
+
+### Actions effectuées
+- Analyse complète des deux branches (`main` et `claude/automatisation-ultime-docs-m3tv2e`)
+- Création de `CLAUDE.md` à la racine — fichier d'initialisation auto-chargé par Claude Code
+  - Contient : décisions figées, ordre de lecture minimum (5 fichiers), règle de contribution, URLs Notion actives, stack technique
+  - Objectif : permettre à tout agent IA de démarrer en < 500 tokens sans relire l'historique complet
+- Mise à jour de `docs/SESSION_LOG.md` (cette entrée)
+
+### Décisions prises
+- Aucune décision architecturale — ajout documentaire uniquement
+- `CLAUDE.md` est le point d'entrée canonique pour Claude Code ; les autres IA utilisent le README + `docs/PROJECT_BRIEF.md`
+
+### En attente de validation
+- Franck définira oralement les nouvelles features attendues lors de la prochaine session
