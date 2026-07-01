@@ -9,9 +9,10 @@ Avec arguments : mode CLI direct.
 Usage:
   python context_filter.py                                        # mode interactif
   python context_filter.py --temps 3h                            # 3h, tous supports, partout
-  python context_filter.py --temps 45min --support Téléphone     # 45min sur téléphone
+  python context_filter.py --temps 45min --support Téléphone
   python context_filter.py --temps 2h --support "PC Portable" --pays France
-  python context_filter.py --temps 1h30 --support Téléphone --pays Thaïlande --context "matinée calme"
+  python context_filter.py --temps 1h30 --energie Faible         # tâches légères seulement
+  python context_filter.py --temps 1h --support Téléphone --pays Thaïlande --energie Moyenne
 
 Prérequis :
   pip install notion-client python-dotenv
@@ -31,8 +32,14 @@ load_dotenv()
 NOTION_TOKEN = os.getenv("NOTION_TOKEN")
 NOTION_DATABASE_ID = os.getenv("NOTION_DATABASE_ID")
 
-PRIORITY_ORDER = {
+URGENCE_ORDER = {
     "🔴 Urgent": 0,
+    "🟡 Normal": 1,
+    "⚪ Non urgent": 2,
+}
+
+IMPORTANCE_ORDER = {
+    "🔴 Critique": 0,
     "🟠 Important": 1,
     "🟡 Secondaire": 2,
     "⚪ Optionnel": 3,
@@ -47,6 +54,8 @@ DURATION_MINUTES = {
     "Demi-journée": 240,
     "1 jour+": 480,
 }
+
+ENERGIE_LEVELS = ["Faible", "Moyenne", "Élevée"]
 
 
 # ---------------------------------------------------------------------------
@@ -126,7 +135,7 @@ def durees_dans_budget(budget_min):
 # Filtrage et tri
 # ---------------------------------------------------------------------------
 
-def filter_and_sort(tasks, supports, durees_ok, pays):
+def filter_and_sort(tasks, supports, durees_ok, pays, energie=None):
     result = [t for t in tasks if get_prop(t, "Statut", "status") != "Terminé"]
 
     if pays and pays != "Global":
@@ -144,11 +153,15 @@ def filter_and_sort(tasks, supports, durees_ok, pays):
     if durees_ok:
         result = [t for t in result if get_prop(t, "Durée", "select") in durees_ok]
 
+    if energie:
+        result = [t for t in result if get_prop(t, "🔋 Énergie", "select") in (energie, None)]
+
     def key(t):
-        p = PRIORITY_ORDER.get(get_prop(t, "Priorité", "select"), 99)
+        u = URGENCE_ORDER.get(get_prop(t, "🚨 Urgence", "select"), 99)
+        i = IMPORTANCE_ORDER.get(get_prop(t, "💡 Importance", "select"), 99)
         d = DURATION_MINUTES.get(get_prop(t, "Durée", "select"), 9999)
         e = get_prop(t, "Échéance", "date") or "9999-12-31"
-        return (p, d, e)
+        return (u, i, d, e)
 
     result.sort(key=key)
     return result
@@ -167,8 +180,13 @@ def prompt_interactif():
     temps_str = input("Combien de temps as-tu ? (ex: 3h, 45min, 1h30) : ").strip()
     budget = parse_time(temps_str)
     if not budget:
-        print(f"Durée non reconnue : '{temps_str}'. Exemples valides : 3h, 45min, 1h30, 120")
+        print(f"Durée non reconnue : '{temps_str}'. Exemples : 3h, 45min, 1h30")
         sys.exit(1)
+
+    print()
+    print("Niveau d'énergie : Faible / Moyenne / Élevée")
+    energie_str = input("Ton énergie en ce moment ? (Entrée = pas de filtre) : ").strip()
+    energie = energie_str if energie_str in ENERGIE_LEVELS else None
 
     print()
     print("Supports disponibles : Téléphone / PC Portable / PC Fixe")
@@ -181,21 +199,23 @@ def prompt_interactif():
     pays = pays_str if pays_str else None
 
     print()
-    contexte = input("Contexte additionnel ? (ex: matinée calme, avion, en déplacement — Entrée pour ignorer) : ").strip()
+    contexte = input("Contexte additionnel ? (ex: matinée calme, avion — Entrée pour ignorer) : ").strip()
 
-    return budget, supports, pays, contexte
+    return budget, supports, pays, energie, contexte
 
 
 # ---------------------------------------------------------------------------
 # Génération du prompt
 # ---------------------------------------------------------------------------
 
-def build_prompt(tasks, budget, supports, pays, contexte):
+def build_prompt(tasks, budget, supports, pays, energie, contexte):
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     h, m = divmod(budget, 60)
     budget_str = f"{h}h{m:02d}" if h else f"{m}min"
 
     ctx_parts = [f"Temps disponible : {budget_str}"]
+    if energie:
+        ctx_parts.append(f"Énergie : {energie}")
     if supports:
         ctx_parts.append(f"Support : {', '.join(supports)}")
     if pays:
@@ -212,16 +232,18 @@ def build_prompt(tasks, budget, supports, pays, contexte):
     if not tasks:
         print("  Aucune tâche ne correspond à ce contexte.")
         print()
-        print("  Conseils : élargir le support ou le pays, ou vérifier le Master Board.")
+        print("  Conseils : élargir le support, le pays ou le niveau d'énergie.")
         return
 
     for i, t in enumerate(tasks, 1):
         nom = get_prop(t, "Nom de la tâche", "title") or "(sans titre)"
-        prio = get_prop(t, "Priorité", "select") or ""
+        urgence = get_prop(t, "🚨 Urgence", "select") or ""
+        importance = get_prop(t, "💡 Importance", "select") or ""
+        energie_val = get_prop(t, "🔋 Énergie", "select") or ""
         dur = get_prop(t, "Durée", "select") or ""
         sup = ", ".join(get_prop(t, "Support", "multi_select") or [])
         ech = get_prop(t, "Échéance", "date") or ""
-        details = " | ".join(x for x in [dur, prio, sup, ech] if x)
+        details = " | ".join(x for x in [dur, urgence, importance, energie_val, sup, ech] if x)
         print(f"{i}. {nom}  [{details}]")
 
     print()
@@ -231,7 +253,7 @@ def build_prompt(tasks, budget, supports, pays, contexte):
         f"    Règles :\n"
         f"    - Remplis le budget au maximum sans dépasser\n"
         f"    - Ajoute une pause de 10 min si la session dépasse 1h30\n"
-        f"    - Ordre de priorité : Priorité > Durée courte > Échéance\n"
+        f"    - Ordre de priorité : Urgence > Importance > Durée courte > Échéance\n"
         f"    - Présente sous forme d'agenda avec les horaires (ex: 09:00 Tâche A — 30 min)\n"
         f"    - Si des tâches restent, liste-les en 'réserve' pour plus tard"
     )
@@ -248,6 +270,7 @@ def main():
     parser.add_argument("--temps", metavar="DUREE", help="Ex: 3h, 45min, 1h30")
     parser.add_argument("--support", nargs="+", metavar="S", help="Ex: Téléphone 'PC Portable'")
     parser.add_argument("--pays", metavar="P", help="Ex: Thaïlande France Global")
+    parser.add_argument("--energie", metavar="E", help="Faible / Moyenne / Élevée")
     parser.add_argument("--context", metavar="TEXTE", help="Contexte libre additionnel")
     args = parser.parse_args()
 
@@ -258,9 +281,10 @@ def main():
             sys.exit(1)
         supports = args.support
         pays = args.pays
+        energie = args.energie
         contexte = args.context or ""
     else:
-        budget, supports, pays, contexte = prompt_interactif()
+        budget, supports, pays, energie, contexte = prompt_interactif()
 
     print(f"\n[Notion] Connexion...", file=sys.stderr)
     notion = get_notion()
@@ -268,9 +292,9 @@ def main():
     print(f"[Notion] {len(all_tasks)} tâches chargées.", file=sys.stderr)
 
     durees_ok = durees_dans_budget(budget)
-    tasks = filter_and_sort(all_tasks, supports, durees_ok, pays)
+    tasks = filter_and_sort(all_tasks, supports, durees_ok, pays, energie)
 
-    build_prompt(tasks, budget, supports, pays, contexte)
+    build_prompt(tasks, budget, supports, pays, energie, contexte)
 
 
 if __name__ == "__main__":

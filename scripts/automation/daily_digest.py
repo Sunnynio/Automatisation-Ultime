@@ -115,9 +115,10 @@ def main():
         for i, t in enumerate(done, 1):
             nom = get_prop(t, "Nom de la tâche", "title") or "(sans titre)"
             dur = get_prop(t, "Durée", "select") or "?"
-            prio = get_prop(t, "Priorité", "select") or ""
+            urgence = get_prop(t, "🚨 Urgence", "select") or ""
+            importance = get_prop(t, "💡 Importance", "select") or ""
             cat = get_prop(t, "Catégorie", "select") or ""
-            details = " | ".join(x for x in [dur, prio, cat] if x)
+            details = " | ".join(x for x in [dur, urgence, importance, cat] if x)
             print(f"  {i}. {nom}  [{details}]")
     else:
         print("TÂCHES TERMINÉES : aucune")

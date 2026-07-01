@@ -10,8 +10,14 @@ DURATION_MINUTES = {
     "1 jour+": 480,
 }
 
-PRIORITY_ORDER = {
+URGENCE_ORDER = {
     "🔴 Urgent": 0,
+    "🟡 Normal": 1,
+    "⚪ Non urgent": 2,
+}
+
+IMPORTANCE_ORDER = {
+    "🔴 Critique": 0,
     "🟠 Important": 1,
     "🟡 Secondaire": 2,
     "⚪ Optionnel": 3,
@@ -55,9 +61,11 @@ def filter_zombie(tasks: list, days: int = 21) -> list:
 
 
 def sort_by_priority(tasks: list) -> list:
+    """Tri Eisenhower : Urgence > Importance > Durée > Échéance."""
     def key(t):
-        p = PRIORITY_ORDER.get(get_prop(t, "Priorité", "select"), 99)
+        u = URGENCE_ORDER.get(get_prop(t, "🚨 Urgence", "select"), 99)
+        i = IMPORTANCE_ORDER.get(get_prop(t, "💡 Importance", "select"), 99)
         d = DURATION_MINUTES.get(get_prop(t, "Durée", "select"), 9999)
         e = get_prop(t, "Échéance", "date") or "9999-12-31"
-        return (p, d, e)
+        return (u, i, d, e)
     return sorted(tasks, key=key)

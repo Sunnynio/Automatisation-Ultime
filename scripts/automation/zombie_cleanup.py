@@ -105,15 +105,16 @@ def main():
     for i, t in enumerate(zombies, 1):
         nom = get_prop(t, "Nom de la tâche", "title") or "(sans titre)"
         created = t.get("created_time", "")[:10]
-        prio = get_prop(t, "Priorité", "select") or "sans priorité"
+        urgence = get_prop(t, "🚨 Urgence", "select") or "sans urgence"
+        importance = get_prop(t, "💡 Importance", "select") or "sans importance"
         cat = get_prop(t, "Catégorie", "select") or ""
         notes = get_prop(t, "Notes", "rich_text") or ""
 
         age_days = (datetime.now(timezone.utc) - datetime.fromisoformat(t["created_time"])).days
 
-        details = f"créée le {created} ({age_days}j), {prio}"
+        details = f"créée le {created} ({age_days}j) | {urgence} | {importance}"
         if cat:
-            details += f", {cat}"
+            details += f" | {cat}"
 
         print(f"{i}. {nom}")
         print(f"   [{details}]")
