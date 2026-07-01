@@ -1,0 +1,243 @@
+<?xml version="1.0" ?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Spots — Franck Savin</name>
+    <description>Carte personnelle générée depuis Notion via sync_spots_to_kml.py</description>
+    <Style id="restaurant">
+      <IconStyle>
+        <Icon>
+          <href>https://maps.google.com/mapfiles/ms/icons/orange-dot.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="bar">
+      <IconStyle>
+        <Icon>
+          <href>https://maps.google.com/mapfiles/ms/icons/purple-dot.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="activite">
+      <IconStyle>
+        <Icon>
+          <href>https://maps.google.com/mapfiles/ms/icons/blue-dot.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="hotel">
+      <IconStyle>
+        <Icon>
+          <href>https://maps.google.com/mapfiles/ms/icons/green-dot.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="coffee_shop">
+      <IconStyle>
+        <Icon>
+          <href>https://maps.google.com/mapfiles/ms/icons/yellow-dot.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="weed_shop">
+      <IconStyle>
+        <Icon>
+          <href>https://maps.google.com/mapfiles/ms/icons/ltblue-dot.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="lounge">
+      <IconStyle>
+        <Icon>
+          <href>https://maps.google.com/mapfiles/ms/icons/pink-dot.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="brunch">
+      <IconStyle>
+        <Icon>
+          <href>https://maps.google.com/mapfiles/ms/icons/red-dot.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="spa">
+      <IconStyle>
+        <Icon>
+          <href>https://maps.google.com/mapfiles/ms/icons/yellow-dot.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Style id="favori">
+      <IconStyle>
+        <Icon>
+          <href>https://maps.google.com/mapfiles/ms/icons/red-pushpin.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>
+    <Folder>
+      <name>⭐ Favoris</name>
+      <Placemark>
+        <name>L'Européen</name>
+        <description>⭐ Note : 9/10
+📌 Favori
+💰 Menu midi 27 €
+🎭 Solo, Potes
+
+Huîtres + pièce du boucher. Brasserie classique, excellent rapport qualité/prix.
+
+📍 Paris, Gare de Lyon, France</description>
+        <styleUrl>#favori</styleUrl>
+        <Point>
+          <coordinates>2.3737,48.8446,0</coordinates>
+        </Point>
+      </Placemark>
+    </Folder>
+    <Folder>
+      <name>🍽️ Restaurants</name>
+      <Placemark>
+        <name>L'Européen</name>
+        <description>⭐ Note : 9/10
+📌 Favori
+💰 Menu midi 27 €
+🎭 Solo, Potes
+
+Huîtres + pièce du boucher. Brasserie classique, excellent rapport qualité/prix.
+
+📍 Paris, Gare de Lyon, France</description>
+        <styleUrl>#restaurant</styleUrl>
+        <Point>
+          <coordinates>2.3737,48.8446,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Le Comptoir</name>
+        <description>⭐ Note : 8/10
+📌 Visité
+💰 €€€
+🎭 Date, Potes
+
+Cuisine française soignée.
+
+📍 Paris, France</description>
+        <styleUrl>#restaurant</styleUrl>
+        <Point>
+          <coordinates>2.3436,48.8533,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>The Deck BKK</name>
+        <description>📌 Visité
+💰 380++ THB (Taco Tuesday All-you-can-eat)
+🎭 Potes, Date, Pet Friendly
+
+Garden Restaurant. Tacos all-you-can-eat le mardi.
+
+📍 Bangkok, Sukhumvit Soi 20, Thaïlande</description>
+        <styleUrl>#restaurant</styleUrl>
+        <Point>
+          <coordinates>100.5651,13.7269,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Kani Tengoku</name>
+        <description>📌 Visité
+💰 Buffet Premium ~2480++ THB
+🎭 Potes, Solo
+
+King Crab. Buffet fruits de mer haut de gamme : crabe, huîtres.
+
+📍 Bangkok, Centralworld — 1er étage Groove Zone, Thaïlande</description>
+        <styleUrl>#restaurant</styleUrl>
+        <Point>
+          <coordinates>100.5392,13.7467,0</coordinates>
+        </Point>
+      </Placemark>
+    </Folder>
+    <Folder>
+      <name>🍹 Bars</name>
+      <Placemark>
+        <name>Le Train Bleu</name>
+        <description>📌 Visité
+💰 Tartare 38 €
+🎭 Date
+
+Cadre luxe, tartare préparé devant toi
+
+📍 Paris, Gare de Lyon, France</description>
+        <styleUrl>#bar</styleUrl>
+        <Point>
+          <coordinates>2.3738,48.8444,0</coordinates>
+        </Point>
+      </Placemark>
+    </Folder>
+    <Folder>
+      <name>🏛️ Activités</name>
+      <Placemark>
+        <name>God Valley</name>
+        <description>📌 À visiter
+🎭 Solo, Potes
+
+Vallée spectaculaire, paysages uniques, randonnée
+
+📍 Da Lat, Vietnam</description>
+        <styleUrl>#activite</styleUrl>
+        <Point>
+          <coordinates>108.4286,11.9201,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Crazy House</name>
+        <description>📌 À visiter
+🎭 Solo, Potes
+
+Maison architecturale folle, style surréaliste
+
+📍 Da Lat, Vietnam</description>
+        <styleUrl>#activite</styleUrl>
+        <Point>
+          <coordinates>108.4359,11.9363,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Datanla Waterfall</name>
+        <description>📌 À visiter
+
+Cascades et tyroliennes, aventure
+
+📍 Da Lat, Vietnam</description>
+        <styleUrl>#activite</styleUrl>
+        <Point>
+          <coordinates>108.4382,11.9028,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Golden Bridge</name>
+        <description>📌 À visiter
+
+Pont emblématique tenu par des mains géantes, parc d'attractions
+
+📍 Da Nang, Bà Nà Hills, Vietnam</description>
+        <styleUrl>#activite</styleUrl>
+        <Point>
+          <coordinates>107.9836,15.9956,0</coordinates>
+        </Point>
+      </Placemark>
+    </Folder>
+    <Folder>
+      <name>🛋️ Lounges</name>
+      <Placemark>
+        <name>Extime Lounge</name>
+        <description>📌 Visité
+💰 Accès 35 €
+🎭 Solo
+
+Lounge payant, buffet, Wi-Fi, douches. Pratique en transit.
+
+📍 Paris, CDG Terminal 2B/2D, France</description>
+        <styleUrl>#lounge</styleUrl>
+        <Point>
+          <coordinates>2.5477,49.0097,0</coordinates>
+        </Point>
+      </Placemark>
+    </Folder>
+  </Document>
+</kml>
